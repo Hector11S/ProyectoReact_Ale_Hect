@@ -8,6 +8,7 @@ import Layouts from './layouts'
 import { THEME_CONFIG } from './configs/AppConfig';
 import './lang'
 
+
 const themes = {
   dark: `${process.env.PUBLIC_URL}/css/dark-theme.css`,
   light: `${process.env.PUBLIC_URL}/css/light-theme.css`,
