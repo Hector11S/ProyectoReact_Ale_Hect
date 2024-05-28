@@ -1,3 +1,4 @@
+import React from 'react'; 
 import { 
   DashboardOutlined, 
   AppstoreOutlined,
@@ -26,7 +27,8 @@ import {
   FileUnknownOutlined,
   ProfileOutlined
 } from '@ant-design/icons';
-import { APP_PREFIX_PATH, AUTH_PREFIX_PATH } from 'configs/AppConfig'
+import { APP_PREFIX_PATH, AUTH_PREFIX_PATH } from 'configs/AppConfig';
+import IndexAxion from 'Paginas/IndexAxion/IndexAxion';
 
 const extraNavTree = [
   {
@@ -220,6 +222,14 @@ const appsNavTree = [{
       path: `${APP_PREFIX_PATH}/apps/mail/inbox`,
       title: 'sidenav.apps.mail',
       icon: MailOutlined,
+      breadcrumb: false,
+      submenu: []
+    },
+    {
+      key: 'apps-indexaxion',
+      path: `${APP_PREFIX_PATH}/apps/indexaxion`,
+      title: 'sidenav.apps.indexaxion',
+      icon: FileTextOutlined, 
       breadcrumb: false,
       submenu: []
     },
@@ -932,6 +942,15 @@ const docsNavTree = [{
     }
   ]
 }]
+
+export const protectedRoutes = [
+
+  {
+    key: 'apps.indexaxion',
+    path: `${APP_PREFIX_PATH}/indexaxion`,
+    component: React.lazy(() => import('Paginas/IndexAxion/IndexAxion')),
+  },
+];
 
 const navigationConfig = [
   ...dashBoardNavTree,
