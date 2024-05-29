@@ -29,6 +29,8 @@ import {
 } from '@ant-design/icons';
 import { APP_PREFIX_PATH, AUTH_PREFIX_PATH } from 'configs/AppConfig';
 import IndexAxion from 'Paginas/IndexAxion/IndexAxion';
+import IndexFetch from 'Paginas/IndexFetch/IndexFetch';
+
 
 const extraNavTree = [
   {
@@ -229,6 +231,14 @@ const appsNavTree = [{
       key: 'apps-indexaxion',
       path: `${APP_PREFIX_PATH}/apps/indexaxion`,
       title: 'sidenav.apps.indexaxion',
+      icon: FileTextOutlined, 
+      breadcrumb: false,
+      submenu: []
+    },
+    {
+      key: 'apps-indexfetch',
+      path: `${APP_PREFIX_PATH}/apps/indexfetch`,
+      title: 'sidenav.apps.indexfetch',
       icon: FileTextOutlined, 
       breadcrumb: false,
       submenu: []

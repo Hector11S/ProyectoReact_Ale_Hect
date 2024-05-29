@@ -71,6 +71,11 @@ export const protectedRoutes = [
         component: React.lazy(() => import('Paginas/IndexAxion/IndexAxion')),
     },
     {
+        key: 'apps.indexfetch',
+        path: `${APP_PREFIX_PATH}/apps/indexfetch/*`,
+        component: React.lazy(() => import('Paginas/IndexFetch/IndexFetch')),
+    },
+    {
         key: 'apps.mail',
         path: `${APP_PREFIX_PATH}/apps/mail/*`,
         component: React.lazy(() => import('views/app-views/apps/mail')),
