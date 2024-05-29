@@ -22,7 +22,7 @@ const Talla = () => {
     const fetchData = async () => {
       try {
         const tallas = await getTallas();
-        console.log('Datos recibidos de la API:', tallas); // Añadido para depuración
+        console.log('Datos recibidos de la API:', tallas); 
         if (Array.isArray(tallas)) {
           setData(tallas);
           setFilteredData(tallas);
@@ -85,27 +85,27 @@ const Talla = () => {
     }
   };
 
-  const handleDelete = async (talla) => {
-    Modal.confirm({
-      title: '¿Estás seguro de eliminar esta talla?',
-      content: 'Esta acción no se puede deshacer',
-      onOk: async () => {
-        try {
-          await eliminarTalla(talla);
-          notification.success({ message: 'Talla eliminada correctamente' });
-          const tallas = await getTallas();
-          if (Array.isArray(tallas)) {
-            setData(tallas);
-            setFilteredData(tallas);
-          } else {
-            throw new Error('Data format is incorrect');
-          }
-        } catch (error) {
-          notification.error({ message: 'Error al eliminar la talla', description: error.message });
-        }
-      },
-    });
-  };
+  // const handleDelete = async (talla) => {
+  //   Modal.confirm({
+  //     title: '¿Estás seguro de eliminar esta talla?',
+  //     content: 'Esta acción no se puede deshacer',
+  //     onOk: async () => {
+  //       try {
+  //         await eliminarTalla(talla);
+  //         notification.success({ message: 'Talla eliminada correctamente' });
+  //         const tallas = await getTallas();
+  //         if (Array.isArray(tallas)) {
+  //           setData(tallas);
+  //           setFilteredData(tallas);
+  //         } else {
+  //           throw new Error('Data format is incorrect');
+  //         }
+  //       } catch (error) {
+  //         notification.error({ message: 'Error al eliminar la talla', description: error.message });
+  //       }
+  //     },
+  //   });
+  // };
 
   if (loading) {
     return (
@@ -155,13 +155,13 @@ const Talla = () => {
             >
               Detalles
             </Button>
-            <Button
+            {/* <Button
               icon={<DeleteOutlined />}
               onClick={() => handleDelete(record)}
               type="danger"
             >
               Eliminar
-            </Button>
+            </Button> */}
           </Row>
         ),
       },
