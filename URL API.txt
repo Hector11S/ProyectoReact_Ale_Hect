@@ -1,4 +1,0 @@
-https://restful-api.dev/
-https://developer.themoviedb.org/reference/intro/getting-started
-https://reqres.in/
-https://rapidapi.com/kmahshooq/api/crud-operations2

@@ -1,0 +1,178 @@
+*******Importaciones*******
+
+==============================================================================================================
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Table, Spin, Alert, Input, Card, Button } from 'antd';
+import { SearchOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import Flex from 'components/shared-components/Flex';
+import utils from 'utils';
+==============================================================================================================
+
+1)-React y hooks: Importamos React y los hooks useEffect y useState de React.
+2)-Axios: Importamos axios para realizar solicitudes HTTP.
+3)-Ant Design: Importamos varios componentes de Ant Design (Table, Spin, Alert, Input, Card, Button) y dos iconos (SearchOutlined, PlusCircleOutlined).
+4)-Componentes personalizados: Importamos Flex (probablemente un componente de diseño personalizado) y utils (utilidades varias).
+
+
+*******Componente IndexAxion*******
+
+==============================================================================================================
+
+const IndexAxion = () => {
+  const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const options = {
+        method: 'GET',
+        url: 'https://crud-operations2.p.rapidapi.com/api/v1',
+        headers: {
+          'X-RapidAPI-Key': '23b81e831amsh6db846581d271b6p11d5e0jsnaad06a5bb2df',
+          'X-RapidAPI-Host': 'crud-operations2.p.rapidapi.com'
+        }
+      };
+
+      try {
+        const response = await axios.request(options);
+        setData(response.data);
+        setFilteredData(response.data);
+        setLoading(false);
+      } catch (error) {
+        setError(error);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+==============================================================================================================
+
+
+1)-Estados:
+
+-data: Guarda los datos originales obtenidos de la API.
+-filteredData: Guarda los datos filtrados para mostrar en la tabla.
+-loading: Indica si los datos están siendo cargados.
+-error: Guarda cualquier error que ocurra durante la carga de datos.
+
+
+2)-useEffect:
+
+-Se ejecuta al montar el componente para obtener los datos de la API.
+-fetchData es una función asíncrona que hace una solicitud GET a la API.
+-Si la solicitud tiene éxito, data y filteredData se actualizan con la respuesta y se desactiva el estado loading.
+-Si ocurre un error, se guarda en error y se desactiva el estado loading.
+
+
+*******Manejo de búsqueda*******
+
+==============================================================================================================
+
+  const handleSearch = (e) => {
+    const value = e.currentTarget.value;
+    const searchArray = value ? data : filteredData;
+    const filtered = utils.wildCardSearch(searchArray, value);
+    setFilteredData(filtered);
+  };
+==============================================================================================================
+
+1)-handleSearch: Maneja la entrada del buscador.
+
+-Toma el valor del buscador.
+-Filtra data usando wildCardSearch de utils.
+-Actualiza filteredData con los resultados filtrados.
+
+
+
+*******Renderización condicional*******
+==============================================================================================================
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin tip="Cargando..." />
+      </div>
+    );
+  }
+
+  if (error) return <Alert message="Error" description={error.message} type="error" showIcon />;
+==============================================================================================================
+
+1)-Si loading es true, muestra un spinner centrado en la pantalla.
+2)-Si hay un error, muestra un mensaje de error.
+
+
+
+*******Configuración de columnas y renderización de la tabla*******
+
+==============================================================================================================
+
+  const columns = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+    },
+    {
+      title: 'Nombre',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Mensaje',
+      dataIndex: 'da',
+      key: 'da',
+    },
+  ];
+
+  return (
+    <Card>
+      <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
+        <div>
+          <Button type="primary" icon={<PlusCircleOutlined />} block>Nuevo</Button>
+        </div>
+        <Flex className="mb-1" mobileFlex={false}>
+          <div className="mr-md-3 mb-3">
+            <Input placeholder="Buscar" prefix={<SearchOutlined />} onChange={handleSearch} />
+          </div>
+        </Flex>
+      </Flex>
+      <div className="table-responsive">
+        <Table 
+          columns={columns} 
+          dataSource={filteredData} 
+          rowKey="id" 
+        />
+      </div>
+    </Card>
+  );
+};
+
+export default IndexAxion;
+
+==============================================================================================================
+
+
+1)-Columnas de la tabla:
+
+Define las columnas de la tabla, especificando el título y el campo de datos correspondiente (dataIndex y key).
+
+
+2)-Renderización:
+
+-Envuelve el contenido en un Card de Ant Design.
+-Usa Flex para alinear el botón "Nuevo" y el buscador.
+-El botón "Nuevo" tiene un ícono PlusCircleOutlined.
+-El buscador usa Input con el ícono SearchOutlined y handleSearch para manejar los cambios en la entrada.
+-La tabla se renderiza con las columnas definidas y los datos filtrados (filteredData). Se usa id como clave para las filas.
+
+
+Este código proporciona una tabla de datos con funcionalidad de búsqueda y un botón para agregar nuevos elementos. El estado de carga y los errores se manejan de manera adecuada, proporcionando una experiencia de usuario robusta.
+
+
+

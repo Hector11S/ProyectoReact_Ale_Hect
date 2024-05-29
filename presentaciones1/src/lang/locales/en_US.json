@@ -15,8 +15,11 @@
 	"sidenav.apps.chat": "Chat",
 	"sidenav.apps.indexaxion": "IndexAxion",
 	"sidenav.apps.indexfetch": "IndexFetch",
+
 	"sidenav.apps.indexmarcas": "IndexMarcas",
 
+
+	"sidenav.apps.talla": "Tallas",
 
 	"sidenav.apps.calendar": "Calendar",
 	"sidenav.apps.project": "Project",

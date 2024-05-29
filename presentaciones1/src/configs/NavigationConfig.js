@@ -272,6 +272,14 @@ const appsNavTree = [{
       submenu: []
     },
     {
+      key: 'apps-talla',
+      path: `${APP_PREFIX_PATH}/apps/talla`,
+      title: 'sidenav.apps.talla',
+      icon: FileTextOutlined, 
+      breadcrumb: false,
+      submenu: []
+    },
+    {
       key: 'apps-indexfetch',
       path: `${APP_PREFIX_PATH}/apps/indexfetch`,
       title: 'sidenav.apps.indexfetch',
@@ -972,6 +980,11 @@ export const protectedRoutes = [
     key: 'apps.indexaxion',
     path: `${APP_PREFIX_PATH}/indexaxion`,
     component: React.lazy(() => import('Paginas/IndexAxion/IndexAxion')),
+  },
+  {
+    key: 'apps.talla',
+    path: `${APP_PREFIX_PATH}/talla`,
+    component: React.lazy(() => import('Paginas/Tallas/Tallas')),
   },
 ];
 
