@@ -262,7 +262,79 @@ const appsNavTree = [{
       breadcrumb: false,
       submenu: []
     },
-    
+    //Para tablas con esquema de Generales
+    {
+      key: 'apps-generales',
+      path: `${APP_PREFIX_PATH}/apps/generales`,
+      title: 'sidenav.apps.generales',
+      icon: ShoppingCartOutlined,
+      breadcrumb: true,
+      submenu: [
+        {
+          key: 'apps-monedas',
+          path: `${APP_PREFIX_PATH}/apps/monedas`,
+          title: 'sidenav.apps.monedas',
+          icon: FileTextOutlined, 
+          breadcrumb: false,
+          submenu: []
+        },
+      ]
+    },
+
+    //Para tablas con esquema de Producciones
+    {
+      key: 'apps-producciones',
+      path: `${APP_PREFIX_PATH}/apps/producciones`,
+      title: 'sidenav.apps.producciones',
+      icon: ShoppingCartOutlined,
+      breadcrumb: true,
+      submenu: [
+        {
+          key: 'apps-talla',
+          path: `${APP_PREFIX_PATH}/apps/talla`,
+          title: 'sidenav.apps.talla',
+          icon: FileTextOutlined, 
+          breadcrumb: false,
+          submenu: []
+        },
+      ]
+    },
+    //Para tablas con esquema de Acceso
+    {
+      key: 'apps-acceso',
+      path: `${APP_PREFIX_PATH}/apps/acceso`,
+      title: 'sidenav.apps.acceso',
+      icon: ShoppingCartOutlined,
+      breadcrumb: true,
+      submenu: [
+        // {
+        //   key: 'apps-talla',
+        //   path: `${APP_PREFIX_PATH}/apps/talla`,
+        //   title: 'sidenav.apps.talla',
+        //   icon: FileTextOutlined, 
+        //   breadcrumb: false,
+        //   submenu: []
+        // },
+      ]
+    },
+    //Para tablas con esquema de Aduanas
+    {
+      key: 'apps-aduanas',
+      path: `${APP_PREFIX_PATH}/apps/aduanas`,
+      title: 'sidenav.apps.aduanas',
+      icon: ShoppingCartOutlined,
+      breadcrumb: true,
+      submenu: [
+        // {
+        //   key: 'apps-talla',
+        //   path: `${APP_PREFIX_PATH}/apps/talla`,
+        //   title: 'sidenav.apps.talla',
+        //   icon: FileTextOutlined, 
+        //   breadcrumb: false,
+        //   submenu: []
+        // },
+      ]
+    },
     {
       key: 'apps-indexaxion',
       path: `${APP_PREFIX_PATH}/apps/indexaxion`,
@@ -271,14 +343,14 @@ const appsNavTree = [{
       breadcrumb: false,
       submenu: []
     },
-    {
-      key: 'apps-talla',
-      path: `${APP_PREFIX_PATH}/apps/talla`,
-      title: 'sidenav.apps.talla',
-      icon: FileTextOutlined, 
-      breadcrumb: false,
-      submenu: []
-    },
+    // {
+    //   key: 'apps-talla',
+    //   path: `${APP_PREFIX_PATH}/apps/talla`,
+    //   title: 'sidenav.apps.talla',
+    //   icon: FileTextOutlined, 
+    //   breadcrumb: false,
+    //   submenu: []
+    // },
     {
       key: 'apps-indexfetch',
       path: `${APP_PREFIX_PATH}/apps/indexfetch`,
@@ -287,6 +359,8 @@ const appsNavTree = [{
       breadcrumb: false,
       submenu: []
     },
+
+
     {
       key: 'apps-chat',
       path: `${APP_PREFIX_PATH}/apps/chat`,

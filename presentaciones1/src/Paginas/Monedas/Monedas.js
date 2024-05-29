@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Input, Card, Button, Form, notification, Collapse, Modal, Descriptions, Row, Col } from 'antd';
+import { Table, Spin, Alert, Input, Card, Button, Form, notification, Collapse, Modal, Descriptions, Row, Col, Checkbox  } from 'antd';
 import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
-import { getTallas, insertarTalla, editarTalla, eliminarTalla } from 'services/TallaService';
+import { getMonedas, insertarMoneda, editarMoneda } from 'services/MonedaService';
 
 
 const { Panel } = Collapse;
 
-const Talla = () => {
+const Moneda = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,16 +16,16 @@ const Talla = () => {
   const [activeKey, setActiveKey] = useState(null);
   const [showTable, setShowTable] = useState(true);
   const [form] = Form.useForm();
-  const [currentTalla, setCurrentTalla] = useState(null);
+  const [actualmoneda, setActualMoneda] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const tallas = await getTallas();
-        console.log('Datos recibidos de la API:', tallas); 
-        if (Array.isArray(tallas)) {
-          setData(tallas);
-          setFilteredData(tallas);
+        const monedas = await getMonedas();
+        console.log('Datos recibidos de la API:', monedas); 
+        if (Array.isArray(monedas)) {
+          setData(monedas);
+          setFilteredData(monedas);
         } else {
           throw new Error('Data format is incorrect');
         }
@@ -45,12 +45,12 @@ const Talla = () => {
     setFilteredData(filtered);
   };
 
-  const handleCollapseOpen = (key, talla = null) => {
+  const handleCollapseOpen = (key, moneda = null) => {
     setActiveKey(key);
-    setCurrentTalla(talla);
+    setActualMoneda(moneda);
     setShowTable(false);
-    if (talla) {
-      form.setFieldsValue(talla);
+    if (moneda) {
+      form.setFieldsValue(moneda);
     } else {
       form.resetFields();
     }
@@ -58,7 +58,7 @@ const Talla = () => {
 
   const handleCollapseClose = () => {
     setActiveKey(null);
-    setCurrentTalla(null);
+    setActualMoneda(null);
     setShowTable(true);
   };
 
@@ -66,58 +66,58 @@ const Talla = () => {
     try {
       const values = await form.validateFields();
       const date = new Date().toISOString();
-      if (currentTalla) {
+      if (actualmoneda) {
         // Editar
-        const updatedTalla = {
-          ...currentTalla,
+        const updatedMoneda = {
+          ...actualmoneda,
           ...values,
-          tall_FechaModificacion: date,
+          mone_FechaModificacion: date,
           usua_UsuarioModificacion: 1
         };
-        await editarTalla(updatedTalla);
-        notification.success({ message: 'Talla actualizada correctamente' });
+        await editarMoneda(updatedMoneda);
+        notification.success({ message: 'Moneda actualizada correctamente' });
       } else {
         // Nuevo
-        const newTalla = {
+        const newMoneda = {
           ...values,
-          tall_FechaCreacion: date,
+          mone_FechaCreacion: date,
           usua_UsuarioCreacion: 1,
         };
-        await insertarTalla(newTalla);
-        notification.success({ message: 'Talla insertada correctamente' });
+        await insertarMoneda(newMoneda);
+        notification.success({ message: 'Moneda insertada correctamente' });
       }
 
 
-      const tallas = await getTallas();
-      if (Array.isArray(tallas)) {
-        setData(tallas);
-        setFilteredData(tallas);
+      const monedas = await getMonedas();
+      if (Array.isArray(monedas)) {
+        setData(monedas);
+        setFilteredData(monedas);
       } else {
         throw new Error('Data format is incorrect');
       }
       handleCollapseClose();
     } catch (error) {
-      notification.error({ message: 'Error al guardar la talla', description: error.message });
+      notification.error({ message: 'Error al guardar la moneda', description: error.message });
     }
   };
 
-  // const handleDelete = async (talla) => {
+  // const handleDelete = async (moneda) => {
   //   Modal.confirm({
-  //     title: '¿Estás seguro de eliminar esta talla?',
+  //     title: '¿Estás seguro de eliminar esta moneda?',
   //     content: 'Esta acción no se puede deshacer',
   //     onOk: async () => {
   //       try {
-  //         await eliminarTalla(talla);
-  //         notification.success({ message: 'Talla eliminada correctamente' });
-  //         const tallas = await getTallas();
-  //         if (Array.isArray(tallas)) {
-  //           setData(tallas);
-  //           setFilteredData(tallas);
+  //         await eliminarMoneda(moneda);
+  //         notification.success({ message: 'Moneda eliminada correctamente' });
+  //         const monedas = await getMonedas();
+  //         if (Array.isArray(monedas)) {
+  //           setData(monedas);
+  //           setFilteredData(monedas);
   //         } else {
   //           throw new Error('Data format is incorrect');
   //         }
   //       } catch (error) {
-  //         notification.error({ message: 'Error al eliminar la talla', description: error.message });
+  //         notification.error({ message: 'Error al eliminar la moneda', description: error.message });
   //       }
   //     },
   //   });
@@ -136,19 +136,24 @@ const Talla = () => {
   const columns = [
     {
       title: 'ID',
-      dataIndex: 'tall_Id',
-      key: 'tall_Id',
+      dataIndex: 'mone_Id',
+      key: 'mone_Id',
     },
     {
       title: 'Código',
-      dataIndex: 'tall_Codigo',
-      key: 'tall_Codigo',
+      dataIndex: 'mone_Codigo',
+      key: 'mone_Codigo',
     },
     {
-      title: 'Nombre',
-      dataIndex: 'tall_Nombre',
-      key: 'tall_Nombre',
+      title: 'Moneda',
+      dataIndex: 'mone_Descripcion',
+      key: 'mone_Descripcion',
     },
+    {
+        title: 'Es Aduana',
+        dataIndex: 'mone_EsAduana',
+        key: 'mone_EsAduana',
+      },
     {
         title: 'Acciones',
         key: 'actions',
@@ -201,27 +206,32 @@ const Talla = () => {
             <Table 
               columns={columns} 
               dataSource={filteredData} 
-              rowKey="tall_Id" 
+              rowKey="mone_Id" 
             />
           </div>
         </>
       ) : (
         <Collapse activeKey={activeKey}>
-        <Panel header={currentTalla ? (activeKey === 'details' ? 'Detalles de Talla' : 'Editar Talla') : 'Nueva Talla'} key={activeKey}>
+        <Panel header={actualmoneda ? (activeKey === 'details' ? 'Detalles de Moneda' : 'Editar Moneda') : 'Nueva Moneda'} key={activeKey}>
           {activeKey === 'details' ? (
             <>
-              <Card title="Información de Talla" bordered={false}>
+              <Card title="Información de Moneda" bordered={false}>
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Descriptions.Item label="ID">ID: {currentTalla.tall_Id}</Descriptions.Item>
+                    <Descriptions.Item label="ID">ID: {actualmoneda.mone_Id}</Descriptions.Item>
                   </Col>
                   <Col span={12}>
-                    <Descriptions.Item label="Código">Código: {currentTalla.tall_Codigo}</Descriptions.Item>
+                    <Descriptions.Item label="Código">Código: {actualmoneda.mone_Codigo}</Descriptions.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Descriptions.Item label="Nombre">Nombre: {currentTalla.tall_Nombre}</Descriptions.Item>
+                    <Descriptions.Item label="Moneda">Moneda: {actualmoneda.mone_Descripcion}</Descriptions.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Descriptions.Item label="Aduana">Aduana: {actualmoneda.mone_EsAduana}</Descriptions.Item>
                   </Col>
                 </Row>
               </Card>
@@ -230,24 +240,24 @@ const Talla = () => {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Descriptions.Item label="Usuario Creación">
-                      Usuario Creación: {currentTalla.usarioCreacion}
+                      Usuario Creación: {actualmoneda.usuarioCreacionNombre}
                     </Descriptions.Item>
                   </Col>
                   <Col span={12}>
                     <Descriptions.Item label="Fecha Creación">
-                      Fecha Creación: {currentTalla.tall_FechaCreacion}
+                      Fecha Creación: {actualmoneda.mone_FechaCreacion}
                     </Descriptions.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
                   <Col span={12}>
                     <Descriptions.Item label="Usuario Modificación">
-                      Usuario Modificación: {currentTalla.usuarioModificacion}
+                      Usuario Modificación: {actualmoneda.usua_UsuarioModificacion}
                     </Descriptions.Item>
                   </Col>
                   <Col span={12}>
                     <Descriptions.Item label="Fecha Modificación">
-                      Fecha Modificación: {currentTalla.tall_FechaModificacion}
+                      Fecha Modificación: {actualmoneda.mone_FechaModificacion}
                     </Descriptions.Item>
                   </Col>
                 </Row>
@@ -256,11 +266,14 @@ const Talla = () => {
             </>
           ) : (
             <Form form={form} layout="vertical">
-              <Form.Item name="tall_Codigo" label="Código" rules={[{ required: true, message: 'Por favor, ingrese el código' }]}>
+              <Form.Item name="mone_Codigo" label="Código" rules={[{ required: true, message: 'Por favor, ingrese el código' }]}>
                 <Input />
               </Form.Item>
-              <Form.Item name="tall_Nombre" label="Nombre" rules={[{ required: true, message: 'Por favor, ingrese el nombre' }]}>
+              <Form.Item name="mone_Descripcion" label="Nombre" rules={[{ required: true, message: 'Por favor, ingrese el nombre' }]}>
                 <Input />
+              </Form.Item>
+              <Form.Item name="mone_EsAduana" label="Es Aduana">
+                <Checkbox  />
               </Form.Item>
          
               <Button type="primary" onClick={handleSubmit}>Guardar</Button>
@@ -275,4 +288,4 @@ const Talla = () => {
   );
 };
 
-export default Talla;
+export default Moneda;
