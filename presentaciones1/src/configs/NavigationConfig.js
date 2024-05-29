@@ -29,6 +29,7 @@ import {
 } from '@ant-design/icons';
 import { APP_PREFIX_PATH, AUTH_PREFIX_PATH } from 'configs/AppConfig';
 import IndexAxion from 'Paginas/IndexAxion/IndexAxion';
+import IndexMarcas from 'Paginas/IndexMarcas/IndexMarcas';
 import IndexFetch from 'Paginas/IndexFetch/IndexFetch';
 
 
@@ -98,6 +99,7 @@ const extraNavTree = [
           }
         ]
       },
+    
       {
         key: 'extra-auth',
         path: `${APP_PREFIX_PATH}`,
@@ -185,6 +187,39 @@ const dashBoardNavTree = [{
   isGroupTitle: true,
   submenu: [
     {
+      key: 'apps-project',
+      path: `${APP_PREFIX_PATH}/apps/project`,
+      title: 'sidenav.apps.project',
+      icon: BulbOutlined,
+      breadcrumb: true,
+      submenu: [
+        {
+          key: 'apps-indexmarcas',
+          path: `${APP_PREFIX_PATH}/apps/indexmarcas`,
+          title: 'sidenav.apps.indexmarcas',
+          icon: FileTextOutlined, 
+          breadcrumb: false,
+          submenu: []
+        },
+        {
+          key: 'apps-project-list',
+          path: `${APP_PREFIX_PATH}/apps/project/list`,
+          title: 'sidenav.apps.project.list',
+          icon: '',
+          breadcrumb: false,
+          submenu: []
+        },
+        {
+          key: 'apps-project-scrumboard',
+          path: `${APP_PREFIX_PATH}/apps/project/scrumboard`,
+          title: 'sidenav.apps.project.scrumboard',
+          icon: '',
+          breadcrumb: false,
+          submenu: []
+        }
+      ]
+    },
+    {
       key: 'dashboards-default',
       path: `${APP_PREFIX_PATH}/dashboards/default`,
       title: 'sidenav.dashboard.default',
@@ -227,6 +262,7 @@ const appsNavTree = [{
       breadcrumb: false,
       submenu: []
     },
+    
     {
       key: 'apps-indexaxion',
       path: `${APP_PREFIX_PATH}/apps/indexaxion`,
@@ -259,31 +295,8 @@ const appsNavTree = [{
       breadcrumb: true,
       submenu: []
     },
-    {
-      key: 'apps-project',
-      path: `${APP_PREFIX_PATH}/apps/project`,
-      title: 'sidenav.apps.project',
-      icon: BulbOutlined,
-      breadcrumb: true,
-      submenu: [
-        {
-          key: 'apps-project-list',
-          path: `${APP_PREFIX_PATH}/apps/project/list`,
-          title: 'sidenav.apps.project.list',
-          icon: '',
-          breadcrumb: false,
-          submenu: []
-        },
-        {
-          key: 'apps-project-scrumboard',
-          path: `${APP_PREFIX_PATH}/apps/project/scrumboard`,
-          title: 'sidenav.apps.project.scrumboard',
-          icon: '',
-          breadcrumb: false,
-          submenu: []
-        }
-      ]
-    },
+  
+    
     {
       key: 'apps-ecommerce',
       path: `${APP_PREFIX_PATH}/apps/ecommerce`,
