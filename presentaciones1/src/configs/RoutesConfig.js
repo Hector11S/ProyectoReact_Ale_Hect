@@ -71,6 +71,11 @@ export const protectedRoutes = [
         component: React.lazy(() => import('Paginas/IndexAxion/IndexAxion')),
     },
     {
+        key: 'apps.talla',
+        path: `${APP_PREFIX_PATH}/apps/talla/*`,
+        component: React.lazy(() => import('Paginas/Tallas/Tallas')),
+    },
+    {
         key: 'apps.indexfetch',
         path: `${APP_PREFIX_PATH}/apps/indexfetch/*`,
         component: React.lazy(() => import('Paginas/IndexFetch/IndexFetch')),
