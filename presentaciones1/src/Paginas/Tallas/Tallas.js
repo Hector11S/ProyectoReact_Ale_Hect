@@ -159,7 +159,7 @@ const Talla = () => {
             <Button
               icon={<EditOutlined />}
               onClick={() => handleCollapseOpen('edit', record)}
-              style={{ marginRight: 8 }}
+              style={{ marginRight: 8}}
             >
               Editar
             </Button>
@@ -167,7 +167,7 @@ const Talla = () => {
             <Button
               icon={<EyeOutlined />}
               onClick={() => handleCollapseOpen('details', record)}
-              style={{ marginRight: 8 }}
+              style={{ marginRight: 8}}
             >
               Detalles
             </Button>
@@ -184,16 +184,19 @@ const Talla = () => {
   ];
 
   return (
-    <Card>
+    <Card style={{ background: "linear-gradient(to bottom, #33ccff 0%, #ff99cc 100%)" }}>
       {showTable ? (
         <>
+         <Card style={{background: "#94DDFF"}}>
+         <h1 className='text-center'>Index de Tallas</h1>
+         </Card>
           <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
             <div>
               <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Nuevo</Button>
             </div>
             <Flex className="mb-1" mobileFlex={false}>
               <div className="mr-md-3 mb-3">
-                <Input placeholder="Buscar" prefix={<SearchOutlined />} onChange={handleSearch} />
+                <Input placeholder="Buscar" style={{borderColor: "#94DDFF"}} prefix={<SearchOutlined />} onChange={handleSearch} />
               </div>
             </Flex>
           </Flex>

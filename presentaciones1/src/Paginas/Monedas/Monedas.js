@@ -4,6 +4,8 @@ import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOu
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
 import { getMonedas, insertarMoneda, editarMoneda } from 'services/MonedaService';
+import { BODY_BACKGROUND } from 'constants/ThemeConstant';
+import Header from 'components/layout-components/HeaderNav/Header';
 
 
 const { Panel } = Collapse;
@@ -189,21 +191,25 @@ const Moneda = () => {
   ];
 
   return (
-    <Card>
+
+    <Card style={{ background: "linear-gradient(to bottom, #33ccff 0%, #ff99cc 100%)" }}>
       {showTable ? (
         <>
+         <Card style={{background: "#94DDFF"}}>
+         <h1 className='text-center'>Index de Monedas</h1>
+         </Card>
           <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
             <div>
               <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Nuevo</Button>
             </div>
             <Flex className="mb-1" mobileFlex={false}>
               <div className="mr-md-3 mb-3">
-                <Input placeholder="Buscar" prefix={<SearchOutlined />} onChange={handleSearch} />
+                <Input placeholder="Buscar" style={{borderColor: "#94DDFF"}} prefix={<SearchOutlined />} onChange={handleSearch} />
               </div>
             </Flex>
           </Flex>
           <div className="table-responsive">
-            <Table 
+            <Table
               columns={columns} 
               dataSource={filteredData} 
               rowKey="mone_Id" 
@@ -215,7 +221,7 @@ const Moneda = () => {
         <Panel header={actualmoneda ? (activeKey === 'details' ? 'Detalles de Moneda' : 'Editar Moneda') : 'Nueva Moneda'} key={activeKey}>
           {activeKey === 'details' ? (
             <>
-              <Card title="Información de Moneda" bordered={false}>
+              <Card title="Información de Moneda"  bordered={false}>
                 <Row gutter={16}>
                   <Col span={12}>
                     <Descriptions.Item label="ID">ID: {actualmoneda.mone_Id}</Descriptions.Item>
