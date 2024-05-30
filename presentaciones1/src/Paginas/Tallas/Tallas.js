@@ -13,7 +13,7 @@ const Talla = () => {
   const [activeKey, setActiveKey] = useState(null);
   const [showTable, setShowTable] = useState(true);
   const [form] = Form.useForm();
-  const [actualTalla, setCurrentTalla] = useState(null);
+  const [currentTalla, setCurrentTalla] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +37,7 @@ const Talla = () => {
   }, [setLoading]);
 
   const handleSearch = (e) => {
-    const value = e.actualTarget.value.toLowerCase();
+    const value = e.currentTarget.value.toLowerCase();
     const filtered = utils.wildCardSearch(data, value);
     setFilteredData(filtered);
   };
@@ -66,9 +66,10 @@ const Talla = () => {
     try {
       const values = await form.validateFields();
       const date = new Date().toISOString();
-      if (actualTalla) {
+      if (currentTalla) {
         const updatedTalla = {
-          ...actualTalla,
+          //editar
+          ...currentTalla,
           ...values,
           tall_FechaModificacion: date,
           usua_UsuarioModificacion: 1
@@ -76,6 +77,7 @@ const Talla = () => {
         await editarTalla(updatedTalla);
         notification.success({ message: 'Talla actualizada correctamente' });
       } else {
+        //nuevo
         const newTalla = {
           ...values,
           tall_FechaCreacion: date,
@@ -124,7 +126,7 @@ const Talla = () => {
 
 
 const detailsTemplate = () => {
-  if (!actualTalla) return null;
+  if (!currentTalla) return null;
 
   return (
     <div className="details-view">
@@ -140,13 +142,13 @@ const detailsTemplate = () => {
         <div style={{ marginBottom: '16px' }}>
           <Row gutter={[16, 16]}>
             <Col span={8}>
-              <strong>ID:</strong> {actualTalla.tall_Id}
+              <strong>ID:</strong> {currentTalla.tall_Id}
             </Col>
             <Col span={8}>
-              <strong>Código:</strong> {actualTalla.tall_Codigo}
+              <strong>Código:</strong> {currentTalla.tall_Codigo}
             </Col>
             <Col span={8}>
-              <strong>Nombre:</strong> {actualTalla.tall_Nombre}
+              <strong>Nombre:</strong> {currentTalla.tall_Nombre}
             </Col>
           </Row>
         </div>
@@ -159,8 +161,8 @@ const detailsTemplate = () => {
               { title: 'Fecha', dataIndex: 'date', key: 'date' }
             ]}
             dataSource={[
-              { key: '1', action: 'Creación', user: actualTalla.usarioCreacion, date: actualTalla.tall_FechaCreacion },
-              { key: '2', action: 'Modificación', user: actualTalla.usuarioModificacion || 'N/A', date: actualTalla.tall_FechaModificacion || 'N/A' }
+              { key: '1', action: 'Creación', user: currentTalla.usarioCreacion, date: currentTalla.tall_FechaCreacion },
+              { key: '2', action: 'Modificación', user: currentTalla.usuarioModificacion || 'N/A', date: currentTalla.tall_FechaModificacion || 'N/A' }
             ]}
             pagination={false}
           />
@@ -177,7 +179,7 @@ const detailsTemplate = () => {
         <Card>
           <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
             <Col>
-              <h2>{actualTalla ? 'Editar Talla' : 'Nueva Talla'}</h2>
+              <h2>{currentTalla ? 'Editar Talla' : 'Nueva Talla'}</h2>
             </Col>
             <Col>
               {/* <Button type="primary" onClick={handleCollapseClose} danger>Cerrar</Button> */}
@@ -202,7 +204,7 @@ const detailsTemplate = () => {
                   Cancelar
                 </Button>
                 <Button type="primary" htmlType="submit">
-                  {actualTalla ? 'Actualizar' : 'Crear'}
+                  {currentTalla ? 'Actualizar' : 'Crear'}
                 </Button>
               </Col>
             </Row>
