@@ -24,26 +24,8 @@ export const fetchMarcas = async () => {
   }
 };
 
-export const fetchMarcaDetails = async (id) => {
-  const options = {
-    method: 'GET',
-    url: `${apiUrl}/ObtenerPorId/${id}`,
-    headers: {
-      'XApiKey': apiKey,
-    }
-  };
 
-  try {
-    const response = await axios.request(options);
-    if (response.data && response.data.data) {
-      return response.data.data;
-    } else {
-      throw new Error('La respuesta de la API no contiene los datos esperados');
-    }
-  } catch (error) {
-    throw error;
-  }
-};
+
 
 export const deleteMarca = async (record) => {
   const options = {

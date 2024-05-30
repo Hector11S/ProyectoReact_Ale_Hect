@@ -1,102 +1,203 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Input, Card, Button, Modal, Form, notification } from 'antd';
-import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Table, Spin, Alert, Input, Card, Button, Form, notification, Modal, Row, Col } from 'antd';
+import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
-// import Right from 'views/app-views/components/data-display/timeline/Right';
-import { fetchMarcas, fetchMarcaDetails, deleteMarca, saveMarca } from '../../services/MarcasServicios';
+import { fetchMarcas, saveMarca, deleteMarca } from 'services/MarcasServicios';
 
 const IndexMarcas = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('table'); 
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [historialData, setHistorialData] = useState([]);
-  const [marcaDetails, setMarcaDetails] = useState({});
+  const [activeKey, setActiveKey] = useState(null);
+  const [showTable, setShowTable] = useState(true);
   const [form] = Form.useForm();
-
-  const fetchData = async () => {
-    try {
-      const data = await fetchMarcas();
-      setData(data);
-      setFilteredData(data);
-      setLoading(false);
-    } catch (error) {
-      setError(error);
-      setLoading(false);
-    }
-  };
+  const [currentMarca, setCurrentMarca] = useState(null);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const marcas = await fetchMarcas();
+        console.log('Datos recibidos de la API:', marcas); 
+        if (Array.isArray(marcas)) {
+          setData(marcas);
+          setFilteredData(marcas);
+        } else {
+          throw new Error('Data format is incorrect');
+        }
+        setLoading(false);
+      } catch (error) {
+        setError(error);
+        setLoading(false);
+      }
+    };
+
     fetchData();
   }, []);
 
   const handleSearch = (e) => {
     const value = e.currentTarget.value.toLowerCase();
-    const searchArray = value ? data : filteredData;
-    const filtered = utils.wildCardSearch(searchArray, value);
+    const filtered = utils.wildCardSearch(data, value);
     setFilteredData(filtered);
   };
 
-  const handleNew = () => {
-    form.resetFields();
-    setSelectedRecord(null);
-    setView('form');
-  };
+  const handleCollapseOpen = (key, marca = null) => {
+    setActiveKey(key);
+    setShowTable(false);
 
-  const handleEdit = (record) => {
-    form.setFieldsValue(record);
-    setSelectedRecord(record);
-    setView('form');
-  };
-
-  const handleDetails = async (record) => {
-    setSelectedRecord(record);
-    setView('details');
-    try {
-      const details = await fetchMarcaDetails(record.marc_Id);
-      setMarcaDetails(details);
-      setHistorialData([
-        { accion: 'Creación', fecha: details.marc_FechaCreacion, usuario: details.usuarioCreacionNombre },
-        { accion: 'Modificación', fecha: details.marc_FechaModificacion, usuario: details.usuarioModificacionNombre },
-        { accion: 'Eliminación', fecha: details.marc_FechaEliminacion, usuario: details.usuarioEliminacionNombre },
-      ].filter(item => item.fecha));
-    } catch (error) {
-      console.error("Error fetching historial data:", error);
+    if (marca) {
+      form.setFieldsValue(marca);
+      setCurrentMarca(marca);
+    } else {
+      form.resetFields();
+      setCurrentMarca(null);
     }
   };
 
-  const handleDelete = (record) => {
+  const handleCollapseClose = () => {
+    setActiveKey(null);
+    setCurrentMarca(null);
+    setShowTable(true);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      const date = new Date().toISOString();
+      if (currentMarca) {
+        const updatedMarca = {
+          ...currentMarca,
+          ...values,
+          marc_FechaModificacion: date,
+          usua_UsuarioModificacion: 1
+        };
+        await saveMarca(updatedMarca);
+        notification.success({ message: 'Marca actualizada correctamente' });
+      } else {
+        const newMarca = {
+          ...values,
+          marc_FechaCreacion: date,
+          usua_UsuarioCreacion: 1,
+        };
+        await saveMarca(newMarca);
+        notification.success({ message: 'Marca insertada correctamente' });
+      }
+
+      const marcas = await fetchMarcas();
+      if (Array.isArray(marcas)) {
+        setData(marcas);
+        setFilteredData(marcas);
+      } else {
+        throw new Error('Data format is incorrect');
+      }
+      handleCollapseClose();
+    } catch (error) {
+      notification.error({ message: 'Error al guardar la marca', description: error.message });
+    }
+  };
+
+  const handleDelete = async (marca) => {
     Modal.confirm({
       title: '¿Estás seguro de eliminar esta marca?',
+      content: 'Esta acción no se puede deshacer',
       onOk: async () => {
         try {
-          await deleteMarca(record);
+          await deleteMarca(marca);
           notification.success({ message: 'Marca eliminada correctamente' });
-          fetchData(); // Refresh the data after deletion
+          const marcas = await fetchMarcas();
+          if (Array.isArray(marcas)) {
+            setData(marcas);
+            setFilteredData(marcas);
+          } else {
+            throw new Error('Data format is incorrect');
+          }
         } catch (error) {
-          notification.error({ message: 'Error al eliminar la marca' });
+          notification.error({ message: 'Error al eliminar la marca', description: error.message });
         }
       },
     });
   };
 
-  const handleFormSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      await saveMarca(values);
-      notification.success({ message: 'Operación completada correctamente' });
-      fetchData(); // Refresh the data after insertion or editing
-      setView('table');
-    } catch (error) {
-      notification.error({ message: 'Error al guardar la marca' });
-    }
+  const detailsTemplate = () => {
+    if (!currentMarca) return null;
+
+    return (
+      <div className="details-view">
+        <Card>
+          <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
+            <Col>
+              <h2>Detalle Marca</h2>
+            </Col>
+            <Col>
+              <Button type="primary" onClick={handleCollapseClose} danger>Cerrar</Button>
+            </Col>
+          </Row>
+          <div style={{ marginBottom: '16px' }}>
+            <Row gutter={[16, 16]}>
+              <Col span={8}>
+                <strong>ID:</strong> {currentMarca.marc_Id}
+              </Col>
+              <Col span={8}>
+                <strong>Marca:</strong> {currentMarca.marc_Descripcion}
+              </Col>
+              <Col span={8}>
+                <strong>Estado:</strong> {currentMarca.marc_Estado ? 'Activo' : 'Inactivo'}
+              </Col>
+            </Row>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <h3>Auditoría</h3>
+            <Table
+              columns={[
+                { title: 'Acción', dataIndex: 'action', key: 'action' },
+                { title: 'Usuario', dataIndex: 'user', key: 'user' },
+                { title: 'Fecha', dataIndex: 'date', key: 'date' }
+              ]}
+              dataSource={[
+                { key: '1', action: 'Creación', user: currentMarca.usuarioCreacionNombre, date: currentMarca.marc_FechaCreacion },
+                { key: '2', action: 'Modificación', user: currentMarca.usuarioModificacionNombre, date: currentMarca.marc_FechaModificacion }
+              ]}
+              pagination={false}
+            />
+          </div>
+        </Card>
+      </div>
+    );
   };
 
-  const handleCollapseClose = () => {
-    setView('table');
+  const formTemplate = () => {
+    return (
+      <div className="form-view">
+        <Card>
+          <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
+            <Col>
+              <h2>{currentMarca ? 'Editar Marca' : 'Nueva Marca'}</h2>
+            </Col>
+            <Col>
+              {/* <Button type="primary" onClick={handleCollapseClose} danger>Cerrar</Button> */}
+            </Col>
+          </Row>
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Form.Item name="marc_Descripcion" label="Descripción" rules={[{ required: true, message: 'La descripción es obligatoria' }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item>
+              <Row justify="end">
+                <Col>
+                  <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+                    {currentMarca ? 'Actualizar' : 'Crear'}
+                  </Button>
+                  <Button onClick={handleCollapseClose} danger>
+                    Cancelar
+                  </Button>
+                </Col>
+              </Row>
+            </Form.Item>
+          </Form>
+        </Card>
+      </div>
+    );
   };
 
   if (loading) {
@@ -115,51 +216,57 @@ const IndexMarcas = () => {
       dataIndex: 'marc_Id',
       key: 'marc_Id',
       sorter: (a, b) => a.marc_Id - b.marc_Id,
+
     },
     {
       title: 'Marca',
       dataIndex: 'marc_Descripcion',
       key: 'marc_Descripcion',
       sorter: (a, b) => a.marc_Descripcion.localeCompare(b.marc_Descripcion),
+
     },
     {
       title: 'Acciones',
       key: 'acciones',
+      align: 'center',
       render: (text, record) => (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Row justify="center">
           <Button
             icon={<EditOutlined />}
+            onClick={() => handleCollapseOpen('edit', record)}
             style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
-            onClick={() => handleEdit(record)}
           >
             Editar
           </Button>
           <Button
-            icon={<InfoCircleOutlined />}
+            icon={<EyeOutlined />}
+            onClick={() => handleCollapseOpen('details', record)}
             style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
-            onClick={() => handleDetails(record)}
           >
             Detalles
           </Button>
           <Button
             icon={<DeleteOutlined />}
-            style={{ backgroundColor: 'red', color: 'white' }}
             onClick={() => handleDelete(record)}
+            style={{ backgroundColor: 'red', color: 'white' }}
           >
             Eliminar
           </Button>
-        </div>
+        </Row>
       ),
     },
   ];
 
   return (
     <Card>
-      {view === 'table' ? (
+      {showTable ? (
         <>
+          <Card>
+            <h1 className='text-center'>Index de Marcas</h1>
+          </Card>
           <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
             <div>
-              <Button type="primary" icon={<PlusCircleOutlined />} block onClick={handleNew}>Nuevo</Button>
+              <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Nuevo</Button>
             </div>
             <Flex className="mb-1" mobileFlex={false}>
               <div className="mr-md-3 mb-3">
@@ -168,61 +275,17 @@ const IndexMarcas = () => {
             </Flex>
           </Flex>
           <div className="table-responsive">
-            <Table 
-              columns={columns} 
-              dataSource={filteredData} 
-              rowKey="marc_Id" 
+            <Table
+              columns={columns}
+              dataSource={filteredData}
+              rowKey="marc_Id"
             />
           </div>
         </>
-      ) : view === 'form' ? (
-        <div style={{ padding: '24px', background: '#fff' }}>
-          <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-            <Form.Item name="marc_Id" label="ID" hidden>
-              <Input />
-            </Form.Item>
-            <Form.Item name="marc_Descripcion" label="Marca" rules={[{ required: true, message: 'Por favor ingrese la marca' }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary" htmlType="submit">Guardar</Button>
-              <Button style={{ marginLeft: 8 }} onClick={handleCollapseClose}>Cancelar</Button>
-            </Form.Item>
-          </Form>
-        </div>
       ) : (
-        <div style={{ padding: '24px', background: '#fff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2>Detalles Marcas</h2>
-            <Button onClick={handleCollapseClose}>Cerrar</Button>
-          </div>
-          <hr />
-          <br /><br />
-          {marcaDetails && (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <div style={{ flex: 1 }}><strong>ID:</strong> {marcaDetails.marc_Id}</div>
-                <div style={{ flex: 1 }}><strong>Marca:</strong> {marcaDetails.marc_Descripcion}</div>
-                <div style={{ flex: 1 }}><strong>Estado:</strong> {marcaDetails.marc_Estado ? 'Activo' : 'Inactivo'}</div>
-              </div>
-              <br /><br />
-              <Card title="Auditoría">
-                <Table
-                  columns={[
-                    { title: 'Acción', dataIndex: 'accion', key: 'accion' },
-                    { title: 'Usuario', dataIndex: 'usuario', key: 'usuario' },
-                    { title: 'Fecha', dataIndex: 'fecha', key: 'fecha' },
-                  ]}
-                  dataSource={historialData}
-                  rowKey="id"
-                />
-              </Card>
-            </>
-          )}
-        </div>
+        activeKey === 'details' ? detailsTemplate() : formTemplate()
       )}
     </Card>
   );
 };
-
 export default IndexMarcas;
