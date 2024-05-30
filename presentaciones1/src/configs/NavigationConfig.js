@@ -193,14 +193,7 @@ const dashBoardNavTree = [{
       icon: BulbOutlined,
       breadcrumb: true,
       submenu: [
-        {
-          key: 'apps-indexmarcas',
-          path: `${APP_PREFIX_PATH}/apps/indexmarcas`,
-          title: 'sidenav.apps.indexmarcas',
-          icon: FileTextOutlined, 
-          breadcrumb: false,
-          submenu: []
-        },
+   
         {
           key: 'apps-project-list',
           path: `${APP_PREFIX_PATH}/apps/project/list`,
@@ -325,14 +318,14 @@ const appsNavTree = [{
       icon: ShoppingCartOutlined,
       breadcrumb: true,
       submenu: [
-        // {
-        //   key: 'apps-talla',
-        //   path: `${APP_PREFIX_PATH}/apps/talla`,
-        //   title: 'sidenav.apps.talla',
-        //   icon: FileTextOutlined, 
-        //   breadcrumb: false,
-        //   submenu: []
-        // },
+        {
+          key: 'apps-indexmarcas',
+          path: `${APP_PREFIX_PATH}/apps/indexmarcas`,
+          title: 'sidenav.apps.indexmarcas',
+          icon: FileTextOutlined, 
+          breadcrumb: false,
+          submenu: []
+        },
       ]
     },
     {
