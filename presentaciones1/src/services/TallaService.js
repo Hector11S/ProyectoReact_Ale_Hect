@@ -20,14 +20,7 @@ export const getTallas = async () => {
   }
 };
 
-export const getTallaById = async (tall_Id) => {
-  try {
-    const response = await axiosInstance.get(`${API_URL}/ListarByIdtalla`, { params: { tall_Id } });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+
 
 export const insertarTalla = async (talla) => {
   try {

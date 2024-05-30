@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Input, Card, Button, Form, notification, Collapse, Modal, Descriptions, Row, Col } from 'antd';
+import { Table, Spin, Alert, Input, Card, Button, Form, notification, Modal, Row, Col } from 'antd';
 import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
 import { getTallas, insertarTalla, editarTalla, eliminarTalla } from 'services/TallaService';
-
-
-const { Panel } = Collapse;
 
 const Talla = () => {
   const [data, setData] = useState([]);
@@ -22,7 +19,7 @@ const Talla = () => {
     const fetchData = async () => {
       try {
         const tallas = await getTallas();
-        console.log('Datos recibidos de la API:', tallas); 
+        console.log('Datos recibidos de la API:', tallas);
         if (Array.isArray(tallas)) {
           setData(tallas);
           setFilteredData(tallas);
@@ -37,7 +34,7 @@ const Talla = () => {
     };
 
     fetchData();
-  }, []);
+  }, [setLoading]);
 
   const handleSearch = (e) => {
     const value = e.currentTarget.value.toLowerCase();
@@ -47,12 +44,15 @@ const Talla = () => {
 
   const handleCollapseOpen = (key, talla = null) => {
     setActiveKey(key);
-    setCurrentTalla(talla);
     setShowTable(false);
+  
     if (talla) {
       form.setFieldsValue(talla);
+      setCurrentTalla(talla);
+      console.log('Current Talla:', talla); 
     } else {
       form.resetFields();
+      setCurrentTalla(null);
     }
   };
 
@@ -67,7 +67,6 @@ const Talla = () => {
       const values = await form.validateFields();
       const date = new Date().toISOString();
       if (currentTalla) {
-        // Editar
         const updatedTalla = {
           ...currentTalla,
           ...values,
@@ -77,7 +76,6 @@ const Talla = () => {
         await editarTalla(updatedTalla);
         notification.success({ message: 'Talla actualizada correctamente' });
       } else {
-        // Nuevo
         const newTalla = {
           ...values,
           tall_FechaCreacion: date,
@@ -87,13 +85,12 @@ const Talla = () => {
         notification.success({ message: 'Talla insertada correctamente' });
       }
 
-
       const tallas = await getTallas();
       if (Array.isArray(tallas)) {
         setData(tallas);
         setFilteredData(tallas);
       } else {
-        throw new Error('Data format is incorrect');
+        throw new Error('Data format es incorrect');
       }
       handleCollapseClose();
     } catch (error) {
@@ -101,27 +98,119 @@ const Talla = () => {
     }
   };
 
-  // const handleDelete = async (talla) => {
-  //   Modal.confirm({
-  //     title: '¿Estás seguro de eliminar esta talla?',
-  //     content: 'Esta acción no se puede deshacer',
-  //     onOk: async () => {
-  //       try {
-  //         await eliminarTalla(talla);
-  //         notification.success({ message: 'Talla eliminada correctamente' });
-  //         const tallas = await getTallas();
-  //         if (Array.isArray(tallas)) {
-  //           setData(tallas);
-  //           setFilteredData(tallas);
-  //         } else {
-  //           throw new Error('Data format is incorrect');
-  //         }
-  //       } catch (error) {
-  //         notification.error({ message: 'Error al eliminar la talla', description: error.message });
-  //       }
-  //     },
-  //   });
-  // };
+  const handleDelete = async (talla) => {
+    Modal.confirm({
+      title: '¿Estás seguro de eliminar esta talla?',
+      content: 'Esta acción no se puede deshacer',
+      onOk: async () => {
+        try {
+          await eliminarTalla(talla);
+          notification.success({ message: 'Talla eliminada correctamente' });
+          const tallas = await getTallas();
+          if (Array.isArray(tallas)) {
+            setData(tallas);
+            setFilteredData(tallas);
+          } else {
+            throw new Error('Data format is incorrect');
+          }
+        } catch (error) {
+          notification.error({ message: 'Error al eliminar la talla', description: error.message });
+        }
+      },
+    });
+  };
+
+
+
+
+const detailsTemplate = () => {
+  if (!currentTalla) return null;
+
+  return (
+    <div className="details-view">
+      <Card>
+        <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
+          <Col>
+            <h2>Detalle Talla</h2>
+          </Col>
+          <Col>
+            <Button type="primary" onClick={handleCollapseClose} danger>Cerrar</Button>
+          </Col>
+        </Row>
+        <div style={{ marginBottom: '16px' }}>
+          <Row gutter={[16, 16]}>
+            <Col span={8}>
+              <strong>ID:</strong> {currentTalla.tall_Id}
+            </Col>
+            <Col span={8}>
+              <strong>Código:</strong> {currentTalla.tall_Codigo}
+            </Col>
+            <Col span={8}>
+              <strong>Nombre:</strong> {currentTalla.tall_Nombre}
+            </Col>
+          </Row>
+        </div>
+        <div style={{ marginBottom: '16px' }}>
+          <h3>Auditoría</h3>
+          <Table
+            columns={[
+              { title: 'Acción', dataIndex: 'action', key: 'action' },
+              { title: 'Usuario', dataIndex: 'user', key: 'user' },
+              { title: 'Fecha', dataIndex: 'date', key: 'date' }
+            ]}
+            dataSource={[
+              { key: '1', action: 'Creación', user: currentTalla.usarioCreacion, date: currentTalla.tall_FechaCreacion },
+              { key: '2', action: 'Modificación', user: currentTalla.usuarioModificacion || 'N/A', date: currentTalla.tall_FechaModificacion || 'N/A' }
+            ]}
+            pagination={false}
+          />
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+
+  const formTemplate = () => {
+    return (
+      <div className="form-view">
+        <Card>
+          <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
+            <Col>
+              <h2>{currentTalla ? 'Editar Talla' : 'Nueva Talla'}</h2>
+            </Col>
+            <Col>
+              {/* <Button type="primary" onClick={handleCollapseClose} danger>Cerrar</Button> */}
+            </Col>
+          </Row>
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="tall_Codigo" label="Código" rules={[{ required: true, message: 'El código es obligatorio' }]}>
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="tall_Nombre" label="Nombre" rules={[{ required: true, message: 'El nombre es obligatorio' }]}>
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16} justify="end">
+              <Col>
+                <Button onClick={handleCollapseClose} style={{ marginRight: '8px' }}>
+                  Cancelar
+                </Button>
+                <Button type="primary" htmlType="submit">
+                  {currentTalla ? 'Actualizar' : 'Crear'}
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </Card>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -138,141 +227,74 @@ const Talla = () => {
       title: 'ID',
       dataIndex: 'tall_Id',
       key: 'tall_Id',
+      sorter: (a, b) => a.tall_Id - b.tall_Id,
     },
     {
       title: 'Código',
       dataIndex: 'tall_Codigo',
       key: 'tall_Codigo',
+      sorter: (a, b) => a.tall_Codigo.localeCompare(b.tall_Codigo),
     },
     {
       title: 'Nombre',
       dataIndex: 'tall_Nombre',
       key: 'tall_Nombre',
+      sorter: (a, b) => a.tall_Nombre.localeCompare(b.tall_Nombre),
     },
     {
-        title: 'Acciones',
-        key: 'actions',
-        align: 'center',
-        render: (text, record) => (
-          <Row justify="center">
-           
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => handleCollapseOpen('edit', record)}
-              style={{ marginRight: 8}}
-            >
-              Editar
-            </Button>
-
-            <Button
-              icon={<EyeOutlined />}
-              onClick={() => handleCollapseOpen('details', record)}
-              style={{ marginRight: 8}}
-            >
-              Detalles
-            </Button>
-            {/* <Button
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record)}
-              type="danger"
-            >
-              Eliminar
-            </Button> */}
-          </Row>
-        ),
-      },
+      title: 'Acciones',
+      key: 'acciones',
+      align: 'center',
+      render: (text, record) => (
+        <Row justify="center">
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => handleCollapseOpen('edit', record)}
+            style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
+          >
+            Editar
+          </Button>
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => handleCollapseOpen('details', record)}
+            style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
+          >
+            Detalles
+          </Button>
+        
+        </Row>
+      ),
+    },
   ];
 
   return (
-    <Card style={{ background: "linear-gradient(to bottom, #33ccff 0%, #ff99cc 100%)" }}>
+    <Card>
       {showTable ? (
         <>
-         <Card style={{background: "#94DDFF"}}>
-         <h1 className='text-center'>Index de Tallas</h1>
-         </Card>
+          <Card>
+            <h1 className='text-center'>Index de Tallas</h1>
+          </Card>
           <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
             <div>
               <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Nuevo</Button>
             </div>
             <Flex className="mb-1" mobileFlex={false}>
               <div className="mr-md-3 mb-3">
-                <Input placeholder="Buscar" style={{borderColor: "#94DDFF"}} prefix={<SearchOutlined />} onChange={handleSearch} />
+                <Input placeholder="Buscar" prefix={<SearchOutlined />} onChange={handleSearch} />
               </div>
             </Flex>
           </Flex>
           <div className="table-responsive">
-            <Table 
-              columns={columns} 
-              dataSource={filteredData} 
-              rowKey="tall_Id" 
+            <Table
+              columns={columns}
+              dataSource={filteredData}
+              rowKey="tall_Id"
+              pagination={{ pageSize: 10 }}
             />
           </div>
         </>
       ) : (
-        <Collapse activeKey={activeKey}>
-        <Panel header={currentTalla ? (activeKey === 'details' ? 'Detalles de Talla' : 'Editar Talla') : 'Nueva Talla'} key={activeKey}>
-          {activeKey === 'details' ? (
-            <>
-              <Card title="Información de Talla" bordered={false}>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Descriptions.Item label="ID">ID: {currentTalla.tall_Id}</Descriptions.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Descriptions.Item label="Código">Código: {currentTalla.tall_Codigo}</Descriptions.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Descriptions.Item label="Nombre">Nombre: {currentTalla.tall_Nombre}</Descriptions.Item>
-                  </Col>
-                </Row>
-              </Card>
-              
-              <Card title="Auditoría" bordered={false} style={{ marginTop: 16 }}>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Descriptions.Item label="Usuario Creación">
-                      Usuario Creación: {currentTalla.usarioCreacion}
-                    </Descriptions.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Descriptions.Item label="Fecha Creación">
-                      Fecha Creación: {currentTalla.tall_FechaCreacion}
-                    </Descriptions.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Descriptions.Item label="Usuario Modificación">
-                      Usuario Modificación: {currentTalla.usuarioModificacion}
-                    </Descriptions.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Descriptions.Item label="Fecha Modificación">
-                      Fecha Modificación: {currentTalla.tall_FechaModificacion}
-                    </Descriptions.Item>
-                  </Col>
-                </Row>
-              </Card>
-              <Button onClick={handleCollapseClose} style={{ marginLeft: 8 }}>Cancelar</Button>
-            </>
-          ) : (
-            <Form form={form} layout="vertical">
-              <Form.Item name="tall_Codigo" label="Código" rules={[{ required: true, message: 'Por favor, ingrese el código' }]}>
-                <Input />
-              </Form.Item>
-              <Form.Item name="tall_Nombre" label="Nombre" rules={[{ required: true, message: 'Por favor, ingrese el nombre' }]}>
-                <Input />
-              </Form.Item>
-         
-              <Button type="primary" onClick={handleSubmit}>Guardar</Button>
-              <Button onClick={handleCollapseClose} style={{ marginLeft: 8 }}>Cancelar</Button>
-            </Form>
-          )}
-        </Panel>
-      </Collapse>
-      
+        activeKey === 'details' ? detailsTemplate() : formTemplate()
       )}
     </Card>
   );
