@@ -1,0 +1,365 @@
+// porque es data.data
+
+export const getTallas = async () => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/Listar`);
+    console.log('Respuesta de la API:', response.data);
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// En este ejemplo, los datos reales que necesitas (una lista de tallas) están dentro de response.data.data. 
+//Esto implica que la respuesta de la API tiene un objeto data, y dentro de este objeto data hay otro campo data que contiene el array de tallas.
+
+// Accediendo a los Datos Correctos
+// Para obtener directamente el array de tallas desde esta estructura anidada, necesitas acceder a
+// response.data.data en lugar de simplemente response.data.
+
+*******************************************************************************************************************************************************************************************************************************************************************
+1.Importaciones
+
+import React, { useEffect, useState } from 'react';
+import { Table, Spin, Alert, Input, Card, Button, Form, notification, Collapse, Row, Col } from 'antd';
+import { SearchOutlined, PlusCircleOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
+import Flex from 'components/shared-components/Flex';
+import utils from 'utils';
+import { getTallas, insertarTalla, editarTalla, eliminarTalla } from 'services/TallaService';
+
+
+-React y Hooks:
+
+useEffect se usa para realizar efectos secundarios en componentes funcionales, como cargar datos al montar el componente.
+useState se usa para manejar el estado local del componente.
+
+-Ant Design:
+
+Table, Spin, Alert, Input, Card, Button, Form, notification, Collapse, Row, Col son componentes UI para construir la interfaz.
+SearchOutlined, PlusCircleOutlined, EditOutlined, EyeOutlined son iconos de Ant Design para mejorar la UI.
+
+-Componentes y utilidades personalizados:
+
+Flex es un componente compartido para manejar el diseño flexible.
+utils contiene funciones utilitarias, como wildCardSearch para búsquedas.
+
+-Servicios:
+
+getTallas, insertarTalla, editarTalla, eliminarTalla son funciones para interactuar con el backend y manejar las operaciones CRUD de las tallas.
+
+*************************************************************************************
+
+2.Definición del Componente Talla
+
+const { Panel } = Collapse;
+
+const Talla = () => {
+  const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeKey, setActiveKey] = useState(null);
+  const [showTable, setShowTable] = useState(true);
+  const [form] = Form.useForm();
+  const [currentTalla, setCurrentTalla] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const tallas = await getTallas();
+        console.log('Datos recibidos de la API:', tallas); 
+        if (Array.isArray(tallas)) {
+          setData(tallas);
+          setFilteredData(tallas);
+        } else {
+          throw new Error('Data format is incorrect');
+        }
+        setLoading(false);
+      } catch (error) {
+        setError(error);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+-Estados:
+
+*data: Almacena las tallas obtenidas del backend.
+*filteredData: Almacena las tallas filtradas según la búsqueda.
+*loading: Indica si los datos están cargando.
+*error: Almacena cualquier error que ocurra al cargar los datos.
+*activeKey: Controla el panel activo del Collapse.
+*showTable: Controla si se muestra la tabla o el formulario.
+*form: Instancia del formulario.
+*currentTalla: Almacena la talla actual que se está editando o mostrando.
+
+-useEffect:
+
+*Llama a fetchData al montar el componente para obtener las tallas desde el backend.
+*fetchData es una función asíncrona que obtiene los datos de las tallas usando getTallas. Si los datos son válidos, actualiza los estados data y filteredData. Si ocurre un error, actualiza el estado error.
+
+*******************************************************************************************************************************
+3.Manejo de la Búsqueda
+
+const handleSearch = (e) => {
+  const value = e.currentTarget.value.toLowerCase();
+  const filtered = utils.wildCardSearch(data, value);
+  setFilteredData(filtered);
+};
+
+
+-handleSearch:
+*Captura el valor del campo de búsqueda y lo convierte a minúsculas.
+*Usa wildCardSearch de utils para filtrar las tallas que coinciden con el valor ingresado.
+*Actualiza el estado filteredData con los resultados filtrados.
+
+*******************************************************************************************************************************
+
+4.Manejo del Colapso (Abrir y Cerrar Formularios)
+
+const handleCollapseOpen = (key, talla = null) => {
+  setActiveKey(key);
+  setCurrentTalla(talla);
+  setShowTable(false);
+  if (talla) {
+    form.setFieldsValue(talla);
+  } else {
+    form.resetFields();
+  }
+};
+
+const handleCollapseClose = () => {
+  setActiveKey(null);
+  setCurrentTalla(null);
+  setShowTable(true);
+};
+
+-handleCollapseOpen:
+
+Abre un panel de Collapse y establece el formulario con los datos de la talla seleccionada, o lo resetea si se trata de una nueva talla.
+Actualiza los estados activeKey, currentTalla y showTable.
+
+-handleCollapseClose:
+
+Cierra el panel de Collapse y resetea el estado del formulario.
+Actualiza los estados activeKey, currentTalla y showTable.
+
+*******************************************************************************************************************************
+5.Manejo del Envío del Formulario
+
+const handleSubmit = async () => {
+  try {
+    const values = await form.validateFields();
+    const date = new Date().toISOString();
+    if (currentTalla) {
+      const updatedTalla = {
+        ...currentTalla,
+        ...values,
+        tall_FechaModificacion: date,
+        usua_UsuarioModificacion: 1
+      };
+      await editarTalla(updatedTalla);
+      notification.success({ message: 'Talla actualizada correctamente' });
+    } else {
+      const newTalla = {
+        ...values,
+        tall_FechaCreacion: date,
+        usua_UsuarioCreacion: 1,
+      };
+      await insertarTalla(newTalla);
+      notification.success({ message: 'Talla insertada correctamente' });
+    }
+
+    const tallas = await getTallas();
+    if (Array.isArray(tallas)) {
+      setData(tallas);
+      setFilteredData(tallas);
+    } else {
+      throw new Error('Data format is incorrect');
+    }
+    handleCollapseClose();
+  } catch (error) {
+    notification.error({ message: 'Error al guardar la talla', description: error.message });
+  }
+};
+
+-handleSubmit:
+Valida los campos del formulario.
+Si currentTalla está definida, actualiza la talla existente con los valores del formulario y la fecha de modificación, luego llama a editarTalla.
+Si currentTalla no está definida, inserta una nueva talla con los valores del formulario y la fecha de creación, luego llama a insertarTalla.
+Muestra una notificación de éxito o error según el resultado de la operación.
+Actualiza los datos de las tallas después de la operación.
+Cierra el panel de Collapse.
+
+*******************************************************************************************************************************
+
+6.Renderizado Condicional de la Interfaz
+
+if (loading) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Spin tip="Cargando..." />
+    </div>
+  );
+}
+
+if (error) return <Alert message="Error" description={error.message} type="error" showIcon />;
+
+-Muestra un spinner de carga mientras los datos están cargando.
+-Muestra un mensaje de error si ocurre algún problema al cargar los datos.
+
+*******************************************************************************************************************************
+
+7.Definición de Columnas de la Tabla
+
+const columns = [
+  {
+    title: 'ID',
+    dataIndex: 'tall_Id',
+    key: 'tall_Id',
+  },
+  {
+    title: 'Código',
+    dataIndex: 'tall_Codigo',
+    key: 'tall_Codigo',
+  },
+  {
+    title: 'Nombre',
+    dataIndex: 'tall_Nombre',
+    key: 'tall_Nombre',
+  },
+  {
+    title: 'Acciones',
+    key: 'actions',
+    align: 'center',
+    render: (text, record) => (
+      <Row justify="center">
+        <Button
+          icon={<EditOutlined />}
+          onClick={() => handleCollapseOpen('edit', record)}
+          style={{ marginRight: 8}}
+        >
+          Editar
+        </Button>
+        <Button
+          icon={<EyeOutlined />}
+          onClick={() => handleCollapseOpen('details', record)}
+          style={{ marginRight: 8}}
+        >
+          Detalles
+        </Button>
+      </Row>
+    ),
+  },
+];
+
+-columns:
+*Define las columnas de la tabla, incluyendo los títulos y los campos de datos.
+*La columna de Acciones incluye botones para editar y ver detalles de cada talla.
+
+*******************************************************************************************************************************
+
+8.Renderizado Principal del Componente
+
+return (
+  <Card style={{ background: "linear-gradient(to bottom, #33ccff 0%, #ff99cc 100%)" }}>
+    {showTable ? (
+      <>
+        <Card style={{background: "#94DDFF"}}>
+          <h1 className='text-center'>Index de Tallas</h1>
+        </Card>
+        <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
+          <div>
+            <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Nuevo</Button>
+          </div>
+          <Flex className="mb-1" mobileFlex={false}>
+            <div className="mr-md-3 mb-3">
+              <Input placeholder="Buscar" style={{borderColor: "#94DDFF"}} prefix={<SearchOutlined />} onChange={handleSearch} />
+            </div>
+          </Flex>
+        </Flex>
+        <div className="table-responsive">
+          <Table 
+            columns={columns} 
+            dataSource={filteredData} 
+            rowKey="tall_Id" 
+          />
+        </div>
+      </>
+    ) : (
+      <Collapse activeKey={activeKey}>
+        <Panel header={currentTalla ? (activeKey === 'details' ? 'Detalles de Talla' : 'Editar Talla') : 'Nueva Talla'} key={activeKey}>
+          {activeKey === 'details' ? (
+            <>
+              <Card title="Información de Talla" bordered={false}>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Descriptions.Item label="ID">ID: {currentTalla.tall_Id}</Descriptions.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Descriptions.Item label="Código">Código: {currentTalla.tall_Codigo}</Descriptions.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Descriptions.Item label="Nombre">Nombre: {currentTalla.tall_Nombre}</Descriptions.Item>
+                  </Col>
+                </Row>
+              </Card>
+              <Card title="Auditoría" bordered={false} style={{ marginTop: 16 }}>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Descriptions.Item label="Usuario Creación">
+                      Usuario Creación: {currentTalla.usarioCreacion}
+                    </Descriptions.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Descriptions.Item label="Fecha Creación">
+                      Fecha Creación: {currentTalla.tall_FechaCreacion}
+                    </Descriptions.Item>
+                  </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Descriptions.Item label="Usuario Modificación">
+                      Usuario Modificación: {currentTalla.usuarioModificacion}
+                    </Descriptions.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Descriptions.Item label="Fecha Modificación">
+                      Fecha Modificación: {currentTalla.tall_FechaModificacion}
+                    </Descriptions.Item>
+                  </Col>
+                </Row>
+              </Card>
+              <Button onClick={handleCollapseClose} style={{ marginLeft: 8 }}>Cancelar</Button>
+            </>
+          ) : (
+            <Form form={form} layout="vertical">
+              <Form.Item name="tall_Codigo" label="Código" rules={[{ required: true, message: 'Por favor, ingrese el código' }]}>
+                <Input />
+              </Form.Item>
+              <Form.Item name="tall_Nombre" label="Nombre" rules={[{ required: true, message: 'Por favor, ingrese el nombre' }]}>
+                <Input />
+              </Form.Item>
+              <Button type="primary" onClick={handleSubmit}>Guardar</Button>
+              <Button onClick={handleCollapseClose} style={{ marginLeft: 8 }}>Cancelar</Button>
+            </Form>
+          )}
+        </Panel>
+      </Collapse>
+    )}
+  </Card>
+);
+
+
+-Renderizado del componente:
+Si showTable es true, muestra la tabla de tallas, incluyendo el botón de "Nuevo" y el campo de búsqueda.
+Si showTable es false, muestra el formulario de creación/edición o los detalles de la talla seleccionada.
+El formulario incluye validación y manejo de envío.
+El panel de Collapse permite alternar entre la vista de tabla y el formulario/detalles.
+
+
