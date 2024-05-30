@@ -47,11 +47,11 @@ const Talla = () => {
     setShowTable(false);
   
     if (talla) {
-      form.setFieldsValue(talla);
+      form.setCamposValue(talla);
       setCurrentTalla(talla);
       console.log('Current Talla:', talla); 
     } else {
-      form.resetFields();
+      form.resetCampos();
       setCurrentTalla(null);
     }
   };
@@ -64,7 +64,7 @@ const Talla = () => {
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
+      const values = await form.validateCampos();
       const date = new Date().toISOString();
       if (actualTalla) {
         const updatedTalla = {
