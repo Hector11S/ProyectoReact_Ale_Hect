@@ -234,14 +234,14 @@ const IndexMarcas = () => {
           <Button
             icon={<EditOutlined />}
             onClick={() => handleCollapseOpen('edit', record)}
-            style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
+            style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
           >
             Editar
           </Button>
           <Button
             icon={<EyeOutlined />}
             onClick={() => handleCollapseOpen('details', record)}
-            style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
+            style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
           >
             Detalles
           </Button>
