@@ -161,9 +161,7 @@ const Moneda = () => {
             <Col>
               <h2>{actualmoneda ? 'Editar Moneda' : 'Nueva Moneda'}</h2>
             </Col>
-            <Col>
-              <Button type="primary" onClick={handleCollapseClose} danger>Cerrar</Button>
-            </Col>
+       
           </Row>
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
             <Row gutter={16}>
@@ -187,13 +185,17 @@ const Moneda = () => {
                 </Col>
               </Row>
             )}
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item>
-                  <Button type="primary" htmlType="submit" block>
-                    {actualmoneda ? 'Actualizar' : 'Crear'}
-                  </Button>
-                </Form.Item>
+         
+
+     
+            <Row gutter={16} justify="end">
+              <Col>
+                <Button onClick={handleCollapseClose} style={{ marginRight: '8px' }}>
+                  Cancelar
+                </Button>
+                <Button type="primary" htmlType="submit">
+                  {actualmoneda ? 'Actualizar' : 'Crear'}
+                </Button>
               </Col>
             </Row>
           </Form>
