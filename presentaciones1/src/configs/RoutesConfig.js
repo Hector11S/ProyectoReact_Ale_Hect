@@ -76,6 +76,11 @@ export const protectedRoutes = [
         component: React.lazy(() => import('Paginas/Tallas/Tallas')),
     },
     {
+        key: 'apps.revisiondecalidad',
+        path: `${APP_PREFIX_PATH}/apps/revisiondecalidad/*`,
+        component: React.lazy(() => import('Paginas/IndexRevisionCalidad/IndexRevisionCalidad')),
+    },
+    {
         key: 'apps.monedas',
         path: `${APP_PREFIX_PATH}/apps/monedas/*`,
         component: React.lazy(() => import('Paginas/Monedas/Monedas')),
