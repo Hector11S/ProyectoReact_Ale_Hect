@@ -20,6 +20,23 @@ export const getRevision = async () => {
   }
 };
 
+export const getRevisionEncabezado = async (ensa_Id) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/NuevoListar?ensa_Id=${ensa_Id}`);
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      console.error('Datos del error:', error.response.data);
+      console.error('Estado del error:', error.response.status);
+      console.error('Cabeceras del error:', error.response.headers);
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw error;
+  }
+};
+
+
 export const insertarRevision = async (revision) => {
   try {
     const response = await axiosInstance.post(`${API_URL}/Insertar`, revision, {

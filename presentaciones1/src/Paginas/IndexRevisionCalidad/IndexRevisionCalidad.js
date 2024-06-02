@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Table, Spin, Alert, Input, Card, Button, Form, notification, Modal, Row, Col, Upload, Select } from 'antd';
+import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Select, Popover } from 'antd';
 import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
-import { getRevision, insertarRevision, editarRevision, eliminarRevision } from 'services/RevisionCalidadService';
+import { getRevision, insertarRevision, editarRevision, eliminarRevision, getRevisionEncabezado } from 'services/RevisionCalidadService';
+import axios from 'axios';
 
 const RevisionCalidad = () => {
   const [data, setData] = useState([]);
@@ -16,6 +16,8 @@ const RevisionCalidad = () => {
   const [form] = Form.useForm();
   const [currentRevision, setCurrentRevision] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
+  const [ensaDetails, setEnsaDetails] = useState(null);
+  const [popoverVisible, setPopoverVisible] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +46,8 @@ const RevisionCalidad = () => {
     setActiveKey(key);
     setShowTable(false);
     if (revision) {
-      form.setFieldsValue(revision);
+      const fechaRevision = revision.reca_FechaRevision ? revision.reca_FechaRevision.split('T')[0] : null;
+      form.setFieldsValue({ ...revision, reca_FechaRevision: fechaRevision });
       setCurrentRevision(revision);
       setImageUrl(revision.reca_Imagen);
     } else {
@@ -59,16 +62,26 @@ const RevisionCalidad = () => {
     setCurrentRevision(null);
     setShowTable(true);
     setImageUrl('');
+    setEnsaDetails(null);
+    setPopoverVisible(false);
   };
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+
+      // Validación de imagen
+      if (!imageUrl) {
+        notification.error({ message: 'Error', description: 'Debe subir una imagen antes de guardar.' });
+        return;
+      }
+
       const date = new Date().toISOString();
       const formData = {
         ...values,
         reca_Imagen: imageUrl,
         reca_Scrap: values.reca_Scrap === 'true' || values.reca_Scrap === true,
+        reca_FechaRevision: values.reca_FechaRevision ? new Date(values.reca_FechaRevision).toISOString() : null,
       };
 
       console.log('Datos enviados:', formData);
@@ -130,6 +143,48 @@ const RevisionCalidad = () => {
       notification.success({ message: 'Imagen subida correctamente' });
     } catch (error) {
       notification.error({ message: 'Error al subir la imagen', description: error.message });
+    }
+  };
+
+  const handleEnsaIdChange = async (ensa_Id) => {
+    form.setFieldsValue({ ensa_Id }); // Asegúrate de actualizar el valor del campo en el formulario
+    if (ensa_Id) {
+      try {
+        const response = await getRevisionEncabezado(ensa_Id);
+        setEnsaDetails(response.data.length > 0 ? response.data[0] : null); // Asigna null si no hay datos
+        setPopoverVisible(true);
+      } catch (error) {
+        notification.error({ message: 'Error al obtener detalles del ensa_Id', description: error.message });
+      }
+    } else {
+      setEnsaDetails(null);
+      setPopoverVisible(false);
+    }
+  };
+
+  const popoverContent = (
+    <div>
+      {ensaDetails ? (
+        <Card title="Detalles del Orden">
+          <p><strong>ID:</strong> {ensaDetails.ensa_Id}</p>
+          <p><strong>Cantidad:</strong> {ensaDetails.ensa_Cantidad}</p>
+          <p><strong>Empleado:</strong> {ensaDetails.empl_NombreCompleto}</p>
+          <p><strong>Descripción:</strong> {ensaDetails.esti_Descripcion}</p>
+          <p><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</p>
+          <p><strong>Fecha de Inicio:</strong> {ensaDetails.ensa_FechaInicio}</p>
+          <p><strong>Fecha Límite:</strong> {ensaDetails.ensa_FechaLimite}</p>
+          {/* Agrega más campos según sea necesario */}
+        </Card>
+      ) : (
+        <p>No hay datos disponibles</p>
+      )}
+    </div>
+  );
+
+  const handleQuantityChange = (e) => {
+    const value = e.target.value;
+    if (value < 0) {
+      form.setFieldsValue({ reca_Cantidad: 0});
     }
   };
 
@@ -201,9 +256,24 @@ const RevisionCalidad = () => {
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
             <Row gutter={16}>
               <Col span={12}>
-                <Form.Item name="ensa_Id" label="Ensa ID" rules={[{ required: true, message: 'El ensa_Id es obligatorio' }]}>
-                  <Input />
-                </Form.Item>
+                <Popover
+                  content={popoverContent}
+                  title="Detalles del Orden"
+                  trigger="click"
+                  visible={popoverVisible}
+                  onVisibleChange={(visible) => setPopoverVisible(visible)}
+                >
+                  <Form.Item
+                    name="ensa_Id"
+                    label="Orden"
+                    rules={[{ required: true, message: 'El Campo es obligatorio' }]}
+                  >
+                    <Input type="number" min={1}
+                      onChange={(e) => handleEnsaIdChange(e.target.value)}
+                      onClick={() => setPopoverVisible(true)}
+                    />
+                  </Form.Item>
+                </Popover>
               </Col>
               <Col span={12}>
                 <Form.Item name="reca_Descripcion" label="Descripción" rules={[{ required: true, message: 'La descripción es obligatoria' }]}>
@@ -211,21 +281,22 @@ const RevisionCalidad = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="reca_Cantidad" label="Cantidad" rules={[{ required: true, message: 'La cantidad es obligatoria' }]}>
-                  <Input />
+                <Form.Item
+                  name="reca_Cantidad"
+                  label="Cantidad"
+                  rules={[{ required: true, message: 'La cantidad es obligatoria' }]}
+                >
+                  <Input type="number" min={0} onChange={handleQuantityChange} />
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="reca_Scrap" label="Scrap" rules={[{ required: true, message: 'Scrap es obligatorio' }]}>
-                  <Select>
-                    <Select.Option value={true}>Sí</Select.Option>
-                    <Select.Option value={false}>No</Select.Option>
-                  </Select>
+                <Form.Item name="reca_Scrap" label="Scrap" valuePropName="checked" rules={[{ required: true, message: 'Scrap es obligatorio' }]}>
+                  <Switch />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item name="reca_FechaRevision" label="Fecha de Revisión" rules={[{ required: true, message: 'La fecha de revisión es obligatoria' }]}>
-                  <Input />
+                  <Input type="date" />
                 </Form.Item>
               </Col>
               <Col span={12}>
