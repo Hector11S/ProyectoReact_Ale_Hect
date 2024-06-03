@@ -190,7 +190,7 @@ const Moneda = () => {
      
             <Row gutter={16} justify="end">
               <Col>
-                <Button onClick={handleCollapseClose} style={{ marginRight: '8px' }}>
+                <Button onClick={handleCollapseClose} style={{ marginRight: '8px' }} danger>
                   Cancelar
                 </Button>
                 <Button type="primary" htmlType="submit">

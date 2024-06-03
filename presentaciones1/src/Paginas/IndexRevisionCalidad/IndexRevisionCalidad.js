@@ -142,17 +142,17 @@ const RevisionCalidad = () => {
       setImageUrl(response.data.data.url);
       notification.success({ message: 'Imagen subida correctamente' });
     } catch (error) {
-      notification.error({ message: 'Error al subir la imagen', description: 'Asegurese que sea un Formato Valido' });
+      notification.error({ message: 'Error al subir la imagen', description: 'Asegúrese que sea un Formato Valido' });
      // error.message 
     }
   };
 
   const handleEnsaIdChange = async (ensa_Id) => {
-    form.setFieldsValue({ ensa_Id }); // Asegúrate de actualizar el valor del campo en el formulario
+    form.setFieldsValue({ ensa_Id }); 
     if (ensa_Id) {
       try {
         const response = await getRevisionEncabezado(ensa_Id);
-        setEnsaDetails(response.data.length > 0 ? response.data[0] : null); // Asigna null si no hay datos
+        setEnsaDetails(response.data.length > 0 ? response.data[0] : null); 
         setPopoverVisible(true);
       } catch (error) {
         notification.error({ message: 'Error al obtener detalles del ensa_Id', description: error.message });
@@ -315,7 +315,7 @@ const RevisionCalidad = () => {
             </Row>
             <Row gutter={16} justify="end">
               <Col>
-                <Button onClick={handleCollapseClose} style={{ marginRight: '8px' }}>
+                <Button onClick={handleCollapseClose} style={{ marginRight: '8px' }} danger>
                   Cancelar
                 </Button>
                 <Button type="primary" htmlType="submit">

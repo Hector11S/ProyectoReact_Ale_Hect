@@ -185,11 +185,12 @@ const IndexMarcas = () => {
             <Form.Item>
               <Row justify="end">
                 <Col>
-                  <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
-                    {currentMarca ? 'Actualizar' : 'Crear'}
-                  </Button>
-                  <Button onClick={handleCollapseClose} danger>
+                
+                  <Button onClick={handleCollapseClose} style={{ marginRight: '8px' }} danger>
                     Cancelar
+                  </Button>
+                  <Button type="primary" htmlType="submit">
+                    {currentMarca ? 'Actualizar' : 'Crear'}
                   </Button>
                 </Col>
               </Row>
