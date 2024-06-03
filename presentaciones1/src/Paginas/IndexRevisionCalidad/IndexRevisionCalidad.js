@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Select, Popover } from 'antd';
+import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Select, Popover} from 'antd';
 import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
@@ -18,7 +18,7 @@ const RevisionCalidad = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [ensaDetails, setEnsaDetails] = useState(null);
   const [popoverVisible, setPopoverVisible] = useState(false);
-
+  const { Option } = Select;
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -142,7 +142,8 @@ const RevisionCalidad = () => {
       setImageUrl(response.data.data.url);
       notification.success({ message: 'Imagen subida correctamente' });
     } catch (error) {
-      notification.error({ message: 'Error al subir la imagen', description: error.message });
+      notification.error({ message: 'Error al subir la imagen', description: 'Asegurese que sea un Formato Valido' });
+     // error.message 
     }
   };
 
@@ -165,7 +166,7 @@ const RevisionCalidad = () => {
   const popoverContent = (
     <div>
       {ensaDetails ? (
-        <Card title="Detalles del Orden">
+        <Card title="Detalles de la Orden">
           <p><strong>ID:</strong> {ensaDetails.ensa_Id}</p>
           <p><strong>Cantidad:</strong> {ensaDetails.ensa_Cantidad}</p>
           <p><strong>Empleado:</strong> {ensaDetails.empl_NombreCompleto}</p>
@@ -173,7 +174,7 @@ const RevisionCalidad = () => {
           <p><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</p>
           <p><strong>Fecha de Inicio:</strong> {ensaDetails.ensa_FechaInicio}</p>
           <p><strong>Fecha Límite:</strong> {ensaDetails.ensa_FechaLimite}</p>
-          {/* Agrega más campos según sea necesario */}
+          {/* Agregar*/}
         </Card>
       ) : (
         <p>No hay datos disponibles</p>
@@ -258,7 +259,7 @@ const RevisionCalidad = () => {
               <Col span={12}>
                 <Popover
                   content={popoverContent}
-                  title="Detalles del Orden"
+                  title="Detalles de la Orden"
                   trigger="click"
                   visible={popoverVisible}
                   onVisibleChange={(visible) => setPopoverVisible(visible)}
@@ -290,7 +291,7 @@ const RevisionCalidad = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="reca_Scrap" label="Scrap" valuePropName="checked" rules={[{ required: true, message: 'Scrap es obligatorio' }]}>
+                <Form.Item name="reca_Scrap" label="Scrap" valuePropName="checked" >
                   <Switch />
                 </Form.Item>
               </Col>
@@ -345,6 +346,12 @@ const RevisionCalidad = () => {
       key: 'reca_Id',
       sorter: (a, b) => a.reca_Id - b.reca_Id,
     },
+    // {
+    //   title: 'Orden Id',
+    //   dataIndex: 'ensa_Id',
+    //   key: 'ensa_Id',
+    //   sorter: (a, b) => a.ensa_Id - b.ensa_Id,
+    // },
     {
       title: 'Descripción',
       dataIndex: 'reca_Descripcion',
@@ -410,7 +417,7 @@ const RevisionCalidad = () => {
           </Card>
           <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
             <div>
-              <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Nuevo</Button>
+              <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Añadir Revision</Button>
             </div>
             <Flex className="mb-1" mobileFlex={false}>
               <div className="mr-md-3 mb-3">
