@@ -302,6 +302,25 @@ const appsNavTree = [{
         },
       ]
     },
+
+    {
+      key: 'apps-ordenes',
+      path: `${APP_PREFIX_PATH}/apps/ordenes`,
+      title: 'sidenav.apps.ordenes',
+      icon: ShoppingCartOutlined,
+      breadcrumb: true,
+      submenu: [
+        {
+          key: 'apps-indexorden',
+          path: `${APP_PREFIX_PATH}/apps/ordenes/indexorden`,
+          title: 'sidenav.apps.indexorden',
+          icon: FileTextOutlined,
+          breadcrumb: false,
+          submenu: []
+        },
+      ]
+    },
+   
     //Para tablas con esquema de Acceso
     {
       key: 'apps-acceso',
@@ -346,6 +365,7 @@ const appsNavTree = [{
       breadcrumb: false,
       submenu: []
     },
+ 
     // {
     //   key: 'apps-talla',
     //   path: `${APP_PREFIX_PATH}/apps/talla`,
