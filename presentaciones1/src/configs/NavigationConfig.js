@@ -41,6 +41,7 @@ const extraNavTree = [
     icon: PlusCircleOutlined,
     breadcrumb: true,
     isGroupTitle: true,
+    
     submenu: [
       {
         key: 'extra-pages',
@@ -99,6 +100,7 @@ const extraNavTree = [
           }
         ]
       },
+
     
       {
         key: 'extra-auth',
@@ -286,14 +288,6 @@ const appsNavTree = [{
           key: 'apps-talla',
           path: `${APP_PREFIX_PATH}/apps/talla`,
           title: 'sidenav.apps.talla',
-          icon: FileTextOutlined, 
-          breadcrumb: false,
-          submenu: []
-        },
-        {
-          key: 'apps-revisiondecalidad',
-          path: `${APP_PREFIX_PATH}/apps/revisiondecalidad`,
-          title: 'sidenav.apps.revisiondecalidad',
           icon: FileTextOutlined, 
           breadcrumb: false,
           submenu: []

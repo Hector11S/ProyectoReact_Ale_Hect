@@ -15,17 +15,24 @@
 	"sidenav.apps.chat": "Chat",
 	"sidenav.apps.indexaxion": "IndexAxion",
 	"sidenav.apps.indexfetch": "IndexFetch",
+	"sidenav.apps.ordenes": "Ordenes",
 
-
+	"sidenav.apps.indexorden": "Index de Ordenes" ,
 	"sidenav.apps.generales": "Generales",
 	"sidenav.apps.producciones": "Producciones",
+
 	"sidenav.apps.aduanas": "Aduanas",
 	"sidenav.apps.acceso": "Acceso",
 	"sidenav.apps.indexmarcas": "Marcas",
 
 
 	"sidenav.apps.talla": "Tallas",
+
 	"sidenav.apps.revisiondecalidad": "Revision de Calidad",
+
+	"sidenav.apps.orden": "Orden",
+
+
 	"sidenav.apps.monedas": "Monedas",
 
 
