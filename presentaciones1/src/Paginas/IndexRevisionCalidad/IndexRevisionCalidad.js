@@ -357,7 +357,7 @@ const RevisionCalidad = () => {
               <Col span={12}>
                 <Popover
                   content={popoverContent}
-                  title="Detalles de la Orden"
+                  // title="Detalles de la Orden"
                   trigger="click"
                   visible={popoverVisible}
                   onVisibleChange={(visible) => setPopoverVisible(visible)}
