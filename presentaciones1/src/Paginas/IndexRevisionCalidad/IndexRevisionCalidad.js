@@ -468,27 +468,28 @@ const RevisionCalidad = () => {
     {
       title: 'Acciones',
       key: 'acciones',
+       fixed:'right', width:350,
       align: 'center',
       render: (text, aaa) => (
         <Row justify="center">
           <Button
             icon={<EditOutlined />}
             onClick={() => handleCollapseOpen('edit', aaa)}
-            style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
+            style={{ marginRight: 5, backgroundColor: 'blue', color: 'white'}}
           >
             Editar
           </Button>
           <Button
             icon={<EyeOutlined />}
             onClick={() => handleCollapseOpen('details', aaa)}
-            style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
+            style={{ marginRight: 5, backgroundColor: 'orange', color: 'white' }}
           >
             Detalles
           </Button>
           <Button
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(aaa)}
-            style={{ backgroundColor: 'red', color: 'white' }}
+            style={{ backgroundColor: 'red', color: 'white'}}
           >
             Eliminar
           </Button>
