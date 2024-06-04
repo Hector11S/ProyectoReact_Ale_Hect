@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Spin, Alert, Input, Card, Button, Form, notification, Modal, Row, Col, DatePicker, Select, Checkbox, Radio, Collapse, Steps, InputNumber } from 'antd';
-import { SearchOutlined, PlusCircleOutlined, EditOutlined, EyeOutlined, DeleteOutlined, FileTextOutlined, SolutionOutlined } from '@ant-design/icons';
+import { SearchOutlined, PlusCircleOutlined, CheckOutlined, EditOutlined, EyeOutlined, DeleteOutlined, FileTextOutlined, SolutionOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
 
@@ -60,6 +60,79 @@ const OrdenCompra = () => {
     fetchMateriales();
     setMaterialModalVisible(true);
   };
+ 
+
+
+
+
+  // DATAMASTERRRRRRRRR
+  const renderExpandedRow = (record) => {
+    const materialesData = record.materials || [];
+    const procesosComienzaData = record.proc_IdComienza.map(proc_Id => ({ proc_Id }));
+    const procesosActualData = record.proc_IdActual.map(proc_Id => ({ proc_Id }));
+  
+    return (
+      <div>
+        <h4>Materiales</h4>
+        <Table
+          dataSource={materialesData}
+          columns={[
+            { title: 'Material', dataIndex: 'mate_Id', key: 'mate_Id', render: (text) => availableMateriales.find(m => m.mate_Id === text)?.mate_Descripcion },
+            { title: 'Cantidad', dataIndex: 'mabr_Cantidad', key: 'mabr_Cantidad' },
+            { title: 'Unidad de Medida', dataIndex: 'unme_Id', key: 'unme_Id', render: (text) => unidadesMedida.find(u => u.unme_Id === text)?.unme_Descripcion },
+          ]}
+          rowKey="mate_Id"
+          pagination={false}
+        />
+        <h4>Procesos</h4>
+        <Table
+          dataSource={[...procesosComienzaData, ...procesosActualData]}
+          columns={[
+            { title: 'Proceso', dataIndex: 'proc_Id', key: 'proc_Id', render: (text) => procesos.find(p => p.proc_Id === text)?.proc_Descripcion },
+          ]}
+          rowKey="proc_Id"
+          pagination={false}
+        />
+      </div>
+    );
+  };
+
+
+
+  const handleAddDetail = async () => {
+    try {
+      const values = await form.validateFields(detailFields);
+      const newDetail = {
+        ...values,
+        code_CantidadPrenda: values.code_CantidadPrenda || 1,
+        code_Unidad: values.code_Unidad || 1,
+        esti_Id: values.esti_Id || 0,
+        tall_Id: values.tall_Id || 0,
+        code_FechaProcActual: formatDate(new Date()),
+        code_FechaCreacion: formatDate(new Date()),
+        usua_UsuarioCreacion: 1,
+        isNew: true,
+        orco_Id: currentOrden ? currentOrden.orco_Id : null,
+        proc_IdComienza: selectedProcesosComienza,
+        proc_IdActual: selectedProcesosActual,
+        materials: selectedMateriales.map(material => ({
+          ...material,
+          code_Id: undefined 
+        }))
+      };
+  
+      console.log('New Detail:', newDetail);
+      setDetails(prevDetails => [...prevDetails, newDetail]);
+      form.resetFields(detailFields);
+      setSelectedColor(null);
+      setSelectedMateriales([]); 
+    } catch (errorInfo) {
+      console.error('Validation failed:', errorInfo);
+    }
+  };
+  
+  
+
  
  
   const handleMaterialCountChange = (materialId, count) => {
@@ -198,7 +271,6 @@ const OrdenCompra = () => {
       </Modal>
     );
     
-    // Maneja el cambio en el valor del material
     const handleMaterialChange = (materialId, field, value) => {
       setAvailableMateriales((prev) =>
         prev.map((material) =>
@@ -369,6 +441,15 @@ const OrdenCompra = () => {
     form.setFieldsValue({ code_Sexo: e.target.value });
   };
 
+
+
+
+
+
+  
+
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -382,7 +463,9 @@ const OrdenCompra = () => {
           getProcesos(),
           getColores()
         ]);
-
+  
+        console.log('Ordenes:', ordenes);
+  
         if (Array.isArray(ordenes) && Array.isArray(formasPago) && Array.isArray(tiposEmbalaje) &&
           Array.isArray(clientesList) && Array.isArray(estilosList) && Array.isArray(tallasList) &&
           Array.isArray(procesosList) && Array.isArray(coloresList)) {
@@ -404,10 +487,20 @@ const OrdenCompra = () => {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [setLoading]);
+  
+  
+  
+  
+  
+  
+  
 
+
+
+  
   const handleSearch = (e) => {
     const value = e.currentTarget.value.toLowerCase();
     const filtered = utils.wildCardSearch(data, value);
@@ -550,32 +643,7 @@ const OrdenCompra = () => {
     return date >= minDate && date <= maxDate;
   };
   
-  const handleAddDetail = async () => {
-    try {
-      const values = await form.validateFields(detailFields);
-      const newDetail = {
-        ...values,
-        code_CantidadPrenda: values.code_CantidadPrenda || 1,
-        code_Unidad: values.code_Unidad || 1,
-        esti_Id: values.esti_Id || 0,
-        tall_Id: values.tall_Id || 0,
-        code_FechaProcActual: formatDate(new Date()),
-        code_FechaCreacion: formatDate(new Date()), 
-        usua_UsuarioCreacion: 1,
-        isNew: true,
-        orco_Id: currentOrden ? currentOrden.orco_Id : null,
-        proc_IdComienza: selectedProcesosComienza,
-        proc_IdActual: selectedProcesosActual
-      };
-  
-      console.log('New Detail:', newDetail);
-      setDetails(prevDetails => [...prevDetails, newDetail]);
-      form.resetFields(detailFields); 
-      setSelectedColor(null); 
-    } catch (errorInfo) {
-      console.error('Validation failed:', errorInfo);
-    }
-  };
+ 
   
 
 
@@ -621,8 +689,8 @@ const OrdenCompra = () => {
             isNew: undefined,
             code_FechaProcActual: formatDate(new Date()),
             code_FechaCreacion: formatDate(new Date()),
-            proc_IdComienza: detail.proc_IdComienza[0], // Only the first process ID for details table
-            proc_IdActual: detail.proc_IdActual[0], // Only the first process ID for details table
+            proc_IdComienza: detail.proc_IdComienza[0], 
+            proc_IdActual: detail.proc_IdActual[0], 
           };
   
           console.log('Detail before insert:', detailWithEncabezadoId);
@@ -630,7 +698,6 @@ const OrdenCompra = () => {
           const detailId = insertedDetail ? insertedDetail.data.messageStatus : null;
   
           if (detailId) {
-            // Insert all process IDs to processes by order detail table
             for (const proceso of detail.proc_IdComienza) {
               await insertarProcesoPorOrdenCompraDetalle({
                 code_Id: detailId,
@@ -647,17 +714,17 @@ const OrdenCompra = () => {
                 poco_FechaCreacion: formatDate(new Date())
               });
             }
-            for (const material of selectedMateriales) {
-              console.log('Material before API:', material);
+            for (const material of detail.materials) {
               await insertarMaterialBrindar({
-                code_Id: detailId,
+                code_Id: detailId, 
                 mate_Id: material.mate_Id,
-                unme_Id: material.unme_Id, // Ensure unme_Id is included
+                unme_Id: material.unme_Id,
                 mabr_Cantidad: material.mabr_Cantidad,
                 usua_UsuarioCreacion: 1,
                 mabr_FechaCreacion: formatDate(new Date())
               });
             }
+            
           } else {
             console.error('Error: No detail ID returned from the API');
           }
@@ -690,8 +757,8 @@ const OrdenCompra = () => {
             isNew: undefined,
             code_FechaProcActual: formatDate(new Date()),
             code_FechaCreacion: formatDate(new Date()),
-            proc_IdComienza: detail.proc_IdComienza[0], // Only the first process ID for details table
-            proc_IdActual: detail.proc_IdActual[0], // Only the first process ID for details table
+            proc_IdComienza: detail.proc_IdComienza[0], 
+            proc_IdActual: detail.proc_IdActual[0], 
           };
   
           console.log('Detail before insert:', detailWithEncabezadoId);
@@ -699,7 +766,6 @@ const OrdenCompra = () => {
           const detailId = insertedDetail ? insertedDetail.data.messageStatus : null;
   
           if (detailId) {
-            // Insert all process IDs to processes by order detail table
             for (const proceso of detail.proc_IdComienza) {
               await insertarProcesoPorOrdenCompraDetalle({
                 code_Id: detailId,
@@ -721,7 +787,7 @@ const OrdenCompra = () => {
               await insertarMaterialBrindar({
                 code_Id: detailId,
                 mate_Id: material.mate_Id,
-                unme_Id: material.unme_Id, // Ensure unme_Id is included
+                unme_Id: material.unme_Id, 
                 mabr_Cantidad: material.mabr_Cantidad,
                 usua_UsuarioCreacion: 1,
                 mabr_FechaCreacion: formatDate(new Date())
@@ -1307,114 +1373,119 @@ const OrdenCompra = () => {
           </Form>
 
           <Table
-            dataSource={details}
-            columns={[
-              {
-                title: 'Cantidad Prenda',
-                dataIndex: 'code_CantidadPrenda',
-                key: 'code_CantidadPrenda',
-              },
-              {
-                title: 'Color',
-                dataIndex: 'colr_Id',
-                key: 'colr_Id',
-                render: (text) => colores.find((color) => color.colr_Id === text)?.colr_Nombre,
-              },
-              {
-                title: 'Proceso Comienza',
-                dataIndex: 'proc_IdComienza',
-                key: 'proc_IdComienza',
-                render: (text) => procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion,
-              },
-              {
-                title: 'Proceso Actual',
-                dataIndex: 'proc_IdActual',
-                key: 'proc_IdActual',
-                render: (text) => procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion,
-              },
-              {
-                title: 'Unidad',
-                dataIndex: 'code_Unidad',
-                key: 'code_Unidad',
-              },
-              {
-                title: 'Valor',
-                dataIndex: 'code_Valor',
-                key: 'code_Valor',
-              },
-              {
-                title: 'Especificación de Embalaje',
-                dataIndex: 'code_EspecificacionEmbalaje',
-                key: 'code_EspecificacionEmbalaje',
-              },
-              {
-                title: 'Estilo',
-                dataIndex: 'esti_Id',
-                key: 'esti_Id',
-                render: (text) => estilos.find((estilo) => estilo.esti_Id === text)?.esti_Descripcion,
-              },
-              {
-                title: 'Talla',
-                dataIndex: 'tall_Id',
-                key: 'tall_Id',
-                render: (text) => tallas.find((talla) => talla.tall_Id === text)?.tall_Nombre,
-              },
-              {
-                title: 'Sexo',
-                dataIndex: 'code_Sexo',
-                key: 'code_Sexo',
-              },
-              {
-                title: 'Impuesto',
-                dataIndex: 'code_Impuesto',
-                key: 'code_Impuesto',
-              },
-              {
-                title: 'Acciones',
-                key: 'acciones',
-                render: (text, record, index) => {
-                  const editable = editingKey === record.code_Id;
-                  return editable ? (
-                    <span>
-                      <Button
-                        onClick={() => save(record)}
-                        style={{ marginRight: 8 }}
-                      >
-                        Guardar
-                      </Button>
-                      <Button onClick={cancel}>
-                        Cancelar
-                      </Button>
-                    </span>
-                  ) : (
-                    <span>
-                      <Button
-                        icon={<EditOutlined />}
-                        onClick={() => edit(record)}
-                        style={{ marginRight: 8 }}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDeleteDetail(index, record)}
-                        style={{ marginRight: 8 }}
-                      >
-                        Eliminar
-                      </Button>
-                    </span>
-                  );
-                }
-              }
-            ]}
-            rowClassName="editable-row"
-            components={{
-              body: {
-                cell: EditableCell,
-              },
-            }}
-            rowKey="code_Id"
-          />
+  dataSource={details}
+  columns={[
+    {
+      title: 'Cantidad Prenda',
+      dataIndex: 'code_CantidadPrenda',
+      key: 'code_CantidadPrenda',
+    },
+    {
+      title: 'Color',
+      dataIndex: 'colr_Id',
+      key: 'colr_Id',
+      render: (text) => colores.find((color) => color.colr_Id === text)?.colr_Nombre,
+    },
+    {
+      title: 'Proceso Comienza',
+      dataIndex: 'proc_IdComienza',
+      key: 'proc_IdComienza',
+      render: (text) => procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion,
+    },
+    {
+      title: 'Proceso Actual',
+      dataIndex: 'proc_IdActual',
+      key: 'proc_IdActual',
+      render: (text) => procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion,
+    },
+    {
+      title: 'Unidad',
+      dataIndex: 'code_Unidad',
+      key: 'code_Unidad',
+    },
+    {
+      title: 'Valor',
+      dataIndex: 'code_Valor',
+      key: 'code_Valor',
+    },
+    {
+      title: 'Especificación de Embalaje',
+      dataIndex: 'code_EspecificacionEmbalaje',
+      key: 'code_EspecificacionEmbalaje',
+    },
+    {
+      title: 'Estilo',
+      dataIndex: 'esti_Id',
+      key: 'esti_Id',
+      render: (text) => estilos.find((estilo) => estilo.esti_Id === text)?.esti_Descripcion,
+    },
+    {
+      title: 'Talla',
+      dataIndex: 'tall_Id',
+      key: 'tall_Id',
+      render: (text) => tallas.find((talla) => talla.tall_Id === text)?.tall_Nombre,
+    },
+    {
+      title: 'Sexo',
+      dataIndex: 'code_Sexo',
+      key: 'code_Sexo',
+    },
+    {
+      title: 'Impuesto',
+      dataIndex: 'code_Impuesto',
+      key: 'code_Impuesto',
+    },
+    {
+      title: 'Acciones',
+      key: 'acciones',
+      render: (text, record, index) => {
+        const editable = editingKey === record.code_Id;
+        return editable ? (
+          <span>
+            <Button
+              onClick={() => save(record)}
+              style={{ marginRight: 8 }}
+            >
+              Guardar
+            </Button>
+            <Button onClick={cancel}>
+              Cancelar
+            </Button>
+          </span>
+        ) : (
+          <span>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => edit(record)}
+              style={{ marginRight: 8 }}
+            >
+              Editar
+            </Button>
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteDetail(index, record)}
+              style={{ marginRight: 8 }}
+            >
+              Eliminar
+            </Button>
+          </span>
+        );
+      }
+    }
+  ]}
+  rowClassName="editable-row"
+  components={{
+    body: {
+      cell: EditableCell,
+    },
+  }}
+  rowKey="code_Id"
+  expandable={{
+    expandedRowRender: renderExpandedRow,
+    rowExpandable: record => record.name !== 'Not Expandable',
+  }}
+/>
+
         </>
       )
     }
@@ -1429,6 +1500,10 @@ const OrdenCompra = () => {
   }
 
   if (error) return <Alert message="Error" description={error.message} type="error" showIcon />;
+
+
+
+
 
   const columns = [
     {
@@ -1453,40 +1528,52 @@ const OrdenCompra = () => {
       title: 'Acciones',
       key: 'acciones',
       align: 'center',
-      render: (text, record) => (
-        <Row justify="center">
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleCollapseOpen('edit', record)}
-            style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
-          >
-            Editar
-          </Button>
-          <Button
-            icon={<EyeOutlined />}
-            onClick={() => handleCollapseOpen('details', record)}
-            style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
-          >
-            Detalles
-          </Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-            style={{ backgroundColor: 'red', color: 'white' }}
-          >
-            Eliminar
-          </Button>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() => handleFinalizar(record)}
-            style={{ backgroundColor: 'green', color: 'white' }}
-          >
-            Finalizar
-          </Button>
-        </Row>
-      ),
+      render: (text, record) => {
+        console.log(`Record ID: ${record.orco_Id}, Estado Finalizado: ${record.orco_EstadoFinalizado}`);
+        const isFinalizado = record.orco_EstadoFinalizado === true || record.orco_EstadoFinalizado === 1;
+        return (
+          <Row justify="center">
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => handleCollapseOpen('edit', record)}
+              style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
+              disabled={isFinalizado}  // Deshabilitar el botón si está finalizado
+            >
+              Editar
+            </Button>
+            <Button
+              icon={<EyeOutlined />}
+              onClick={() => handleCollapseOpen('details', record)}
+              style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
+            >
+              Detalles
+            </Button>
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record)}
+              style={{ backgroundColor: 'red', color: 'white' }}
+            >
+              Eliminar
+            </Button>
+            <Button
+              icon={<CheckOutlined />}  
+              onClick={!isFinalizado ? () => handleFinalizar(record) : null}  
+              style={{ backgroundColor: isFinalizado ? 'grey' : 'green', color: 'white' }}
+            >
+              {isFinalizado ? 'Finalizado' : 'Finalizar'}
+            </Button>
+          </Row>
+        );
+      },
     },
   ];
+  
+  
+  
+  
+  
+  
+  
   
 
 
@@ -1639,25 +1726,23 @@ const OrdenCompra = () => {
           <div className="steps-content">
             {steps[currentStep].content}
           </div>
-        
           <div className="steps-action">
             {currentStep < steps.length - 1 && (
-                <Button type="primary" onClick={() => handleStepChange(currentStep + 1)}>
-                    Siguiente
-                </Button>
+              <Button type="primary" onClick={() => handleStepChange(currentStep + 1)}>
+                Siguiente
+              </Button>
             )}
             {currentStep === steps.length - 1 && (
-                <Button type="primary" onClick={handleSubmit}>
-                    {currentOrden ? 'Actualizar' : 'Crear'}
-                </Button>
+              <Button type="primary" onClick={handleSubmit}>
+                {currentOrden ? 'Actualizar' : 'Crear'}
+              </Button>
             )}
             {currentStep > 0 && (
-                <Button style={{ margin: '0 8px' }} onClick={() => handleStepChange(currentStep - 1)}>
-                    Anterior
-                </Button>
+              <Button style={{ margin: '0 8px' }} onClick={() => handleStepChange(currentStep - 1)}>
+                Anterior
+              </Button>
             )}
           </div>
-  
         </>
       )}
       {renderColorModal()}
