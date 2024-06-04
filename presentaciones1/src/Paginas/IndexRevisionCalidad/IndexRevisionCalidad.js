@@ -46,12 +46,15 @@ const RevisionCalidad = () => {
     fetchData();
   }, []);
 
-  const handleSearch = (e) => {
+  //revisiones segun lo que se busca en el datatable
+  const handleSearch = (e) => { 
     const value = e.currentTarget.value.toLowerCase();
     const filtered = utils.wildCardSearch(data, value);
     setFilteredData(filtered);
   };
 
+
+  //abro el formulario para crear o editar
   const handleCollapseOpen = async (key, revision = null) => {
     setActiveKey(key);
     setShowTable(false);
@@ -72,6 +75,8 @@ const RevisionCalidad = () => {
     }
   };
 
+
+  //cierro el formulario y cuando se cierra muestro las tablas
   const handleCollapseClose = () => {
     setActiveKey(null);
     setCurrentRevision(null);
@@ -81,6 +86,8 @@ const RevisionCalidad = () => {
     setPopoverVisible(false);
   };
 
+
+  //subo los datos del formulario al crear o editar
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -132,6 +139,8 @@ const RevisionCalidad = () => {
     }
   };
 
+
+   //aqui elimino la revision seleccionada
   const handleDelete = async (revision) => {
     Modal.confirm({
       title: '¿Estás seguro de eliminar esta revisión?',
@@ -150,6 +159,8 @@ const RevisionCalidad = () => {
     });
   };
 
+
+  //aqui subo la imagen al servidor y guardo la url
   const handleImageUpload = async ({ file }) => {
     const formData = new FormData();
     formData.append('image', file);
@@ -163,6 +174,7 @@ const RevisionCalidad = () => {
     }
   };
 
+  //Cambia el ID de ensa y obtiene detalles adicionales
   const handleEnsaIdChange = async (ensa_Id) => {
     form.setFieldsValue({ ensa_Id });
     if (ensa_Id) {
@@ -179,6 +191,8 @@ const RevisionCalidad = () => {
     }
   };
 
+  //filtra la vista segun la busqueda
+  //pero no lo uso
   const handleSearchEnsa = async (value) => {
     const filtered = ensaList.filter(ensa => {
         if (typeof ensa.ensa_Id === 'string') {
@@ -190,6 +204,7 @@ const RevisionCalidad = () => {
 };
 
 
+//obtengo los detalle de ensa_Id
   const fetchEnsaDetails = async (ensa_Id) => {
     try {
       const response = await getRevisionEncabezado(ensa_Id);
@@ -199,6 +214,8 @@ const RevisionCalidad = () => {
       return null;
     }
   };
+
+  //expansion de la filas para mostrar lo otros detalles
 
   const handleExpand = async (expanded, aaa) => {
     if (expanded) {
@@ -211,6 +228,8 @@ const RevisionCalidad = () => {
     }
   };
 
+
+  //Vista de las Imagenes
   const handlePreview = (file) => {
     setPreviewImage(file.url);
     setPreviewVisible(true);
@@ -218,6 +237,7 @@ const RevisionCalidad = () => {
 
   const handleCancel = () => setPreviewVisible(false);
 
+  //lo que lleva el popover desplegable
   const popoverContent = (
     <div>
       {ensaDetails ? (
@@ -236,6 +256,7 @@ const RevisionCalidad = () => {
     </div>
   );
 
+  //validacion pa que no pase de 0
   const handleQuantityChange = (e) => {
     const value = e.target.value;
     if (value < 0) {
@@ -243,6 +264,8 @@ const RevisionCalidad = () => {
     }
   };
 
+
+  //validacion para que no pueda guardar espacios
   const validateDescription = (_, value) => {
     if (value && value.trim() === '') {
       return Promise.reject(new Error('La descripción no puede contener solo espacios en blanco'));
@@ -468,10 +491,10 @@ const RevisionCalidad = () => {
     {
       title: 'Acciones',
       key: 'acciones',
-       fixed:'right', width:350,
+       fixed:'left', width:350,
       align: 'center',
       render: (text, aaa) => (
-        <Row justify="center">
+        <Row justify="start">
           <Button
             icon={<EditOutlined />}
             onClick={() => handleCollapseOpen('edit', aaa)}
@@ -489,7 +512,7 @@ const RevisionCalidad = () => {
           <Button
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(aaa)}
-            style={{ backgroundColor: 'red', color: 'white'}}
+            style={{ marginRight: 5,backgroundColor: 'red', color: 'white'}}
           >
             Eliminar
           </Button>
