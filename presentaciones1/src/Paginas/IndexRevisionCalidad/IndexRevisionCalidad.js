@@ -273,6 +273,7 @@ const RevisionCalidad = () => {
     return Promise.resolve();
   };
 
+  //Detalles al apretar el boton
   const detailsTemplate = () => {
     if (!currentRevision) return null;
 
