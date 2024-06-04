@@ -200,11 +200,11 @@ const RevisionCalidad = () => {
     }
   };
 
-  const handleExpand = async (expanded, record) => {
+  const handleExpand = async (expanded, aaa) => {
     if (expanded) {
-      const details = await fetchEnsaDetails(record.ensa_Id);
+      const details = await fetchEnsaDetails(aaa.ensa_Id);
       setEnsaDetails(details);
-      setExpandedRowKeys([record.reca_Id]);
+      setExpandedRowKeys([aaa.reca_Id]);
     } else {
       setExpandedRowKeys([]);
       setEnsaDetails(null);
@@ -469,25 +469,25 @@ const RevisionCalidad = () => {
       title: 'Acciones',
       key: 'acciones',
       align: 'center',
-      render: (text, record) => (
+      render: (text, aaa) => (
         <Row justify="center">
           <Button
             icon={<EditOutlined />}
-            onClick={() => handleCollapseOpen('edit', record)}
+            onClick={() => handleCollapseOpen('edit', aaa)}
             style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
           >
             Editar
           </Button>
           <Button
             icon={<EyeOutlined />}
-            onClick={() => handleCollapseOpen('details', record)}
+            onClick={() => handleCollapseOpen('details', aaa)}
             style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
           >
             Detalles
           </Button>
           <Button
             icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
+            onClick={() => handleDelete(aaa)}
             style={{ backgroundColor: 'red', color: 'white' }}
           >
             Eliminar
@@ -521,7 +521,7 @@ const RevisionCalidad = () => {
               rowKey="reca_Id"
               pagination={{ pageSize: 10 }}
               expandable={{
-                expandedRowRender: record => (
+                expandedRowRender: aaa => (
                   ensaDetails ? (
                     <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse' }}>
                       <tbody>
@@ -541,7 +541,7 @@ const RevisionCalidad = () => {
                     <p>Cargando detalles...</p>
                   )
                 ),
-                rowExpandable: record => true,
+                rowExpandable: aaa => true,
                 onExpand: handleExpand,
                 expandedRowKeys: expandedRowKeys,
               }}
