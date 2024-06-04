@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Popover, Tooltip } from 'antd';
+import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Popover, Tooltip, Select } from 'antd';
 import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
-import { getRevision, insertarRevision, editarRevision, eliminarRevision, getRevisionEncabezado } from 'services/RevisionCalidadService';
+import { getRevision, insertarRevision, editarRevision, eliminarRevision, getRevisionEncabezado, getEnsaList } from 'services/RevisionCalidadService';
 import axios from 'axios';
 import '../IndexRevisionCalidad/EstiloRevisision.css';
+
+const { Option } = Select;
 
 const RevisionCalidad = () => {
   const [data, setData] = useState([]);
@@ -22,6 +24,7 @@ const RevisionCalidad = () => {
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
+  const [ensaList, setEnsaList] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +33,9 @@ const RevisionCalidad = () => {
         const revisiones = await getRevision();
         setData(revisiones);
         setFilteredData(revisiones);
+
+        const ensaList = await getEnsaList(); // Obtener la lista de ensa_Id
+        setEnsaList(ensaList);
       } catch (error) {
         setError(error);
       } finally {
@@ -172,6 +178,17 @@ const RevisionCalidad = () => {
       setPopoverVisible(false);
     }
   };
+
+  const handleSearchEnsa = async (value) => {
+    const filtered = ensaList.filter(ensa => {
+        if (typeof ensa.ensa_Id === 'string') {
+            return ensa.ensa_Id.toLowerCase().includes(value.toLowerCase());
+        }
+        return false; // O manejar el caso cuando ensa_Id no es una cadena
+    });
+    setEnsaList(filtered);
+};
+
 
   const fetchEnsaDetails = async (ensa_Id) => {
     try {
@@ -322,22 +339,33 @@ const RevisionCalidad = () => {
                   visible={popoverVisible}
                   onVisibleChange={(visible) => setPopoverVisible(visible)}
                 >
-                  <Form.Item
-                    name="ensa_Id"
-                    label="Orden"
-                    rules={[{ required: true, message: 'El Campo es obligatorio' }]}
-                  >
-                    <Input
-                      type="number"
-                      min={1}
-                      onChange={(e) => handleEnsaIdChange(e.target.value)}
-                      onBlur={() => setPopoverVisible(false)}
-                    />
-                  </Form.Item>
+               <Form.Item
+                name="ensa_Id"
+                label="Orden"
+                rules={[{ required: true, message: 'El Campo es obligatorio' }]}
+              >
+                <Select
+                  showSearch
+                  optionFilterProp="children"
+                  placeholder="Seleccione una orden"
+                  onSelect={handleEnsaIdChange}
+                >
+                  {ensaList.length > 0 ? (
+                    ensaList.map(ensa => (
+                      <Option key={ensa.ensa_Id} value={ensa.ensa_Id}>
+                        {ensa.ensa_Id}
+                      </Option>
+                    ))
+                  ) : (
+                    <Option key="no-data" disabled>No data</Option>
+                  )}
+                </Select>
+              </Form.Item>
+
                 </Popover>
               </Col>
               <Col span={12}>
-             <Form.Item
+                <Form.Item
                   name="reca_Descripcion"
                   label="Descripción"
                   rules={[
@@ -345,9 +373,8 @@ const RevisionCalidad = () => {
                     { validator: validateDescription },
                   ]}
                 >
-                <Input />
-              </Form.Item>
-
+                  <Input />
+                </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
