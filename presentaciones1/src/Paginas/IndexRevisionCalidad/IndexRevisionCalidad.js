@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Select, Popover} from 'antd';
+import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Popover, Select, Tooltip } from 'antd';
 import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
@@ -18,7 +18,11 @@ const RevisionCalidad = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [ensaDetails, setEnsaDetails] = useState(null);
   const [popoverVisible, setPopoverVisible] = useState(false);
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
   const { Option } = Select;
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -73,6 +77,12 @@ const RevisionCalidad = () => {
       // Validación de imagen
       if (!imageUrl) {
         notification.error({ message: 'Error', description: 'Debe subir una imagen antes de guardar.' });
+        return;
+      }
+
+      // Validación de ensa_Id
+      if (!ensaDetails) {
+        notification.error({ message: 'Error', description: 'Debe seleccionar una orden válida.' });
         return;
       }
 
@@ -143,7 +153,6 @@ const RevisionCalidad = () => {
       notification.success({ message: 'Imagen subida correctamente' });
     } catch (error) {
       notification.error({ message: 'Error al subir la imagen', description: 'Asegúrese que sea un Formato Valido' });
-     // error.message 
     }
   };
 
@@ -163,6 +172,34 @@ const RevisionCalidad = () => {
     }
   };
 
+  const fetchEnsaDetails = async (ensa_Id) => {
+    try {
+      const response = await getRevisionEncabezado(ensa_Id);
+      return response.data.length > 0 ? response.data[0] : null;
+    } catch (error) {
+      notification.error({ message: 'Error al obtener detalles del ensa_Id', description: error.message });
+      return null;
+    }
+  };
+
+  const handleExpand = async (expanded, record) => {
+    if (expanded) {
+      const details = await fetchEnsaDetails(record.ensa_Id);
+      setEnsaDetails(details);
+      setExpandedRowKeys([record.reca_Id]);
+    } else {
+      setExpandedRowKeys([]);
+      setEnsaDetails(null);
+    }
+  };
+
+  const handlePreview = async (file) => {
+    setPreviewImage(file.url);
+    setPreviewVisible(true);
+  };
+
+  const handleCancel = () => setPreviewVisible(false);
+
   const popoverContent = (
     <div>
       {ensaDetails ? (
@@ -174,7 +211,6 @@ const RevisionCalidad = () => {
           <p><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</p>
           <p><strong>Fecha de Inicio:</strong> {ensaDetails.ensa_FechaInicio}</p>
           <p><strong>Fecha Límite:</strong> {ensaDetails.ensa_FechaLimite}</p>
-          {/* Agregar*/}
         </Card>
       ) : (
         <p>No hay datos disponibles</p>
@@ -187,6 +223,13 @@ const RevisionCalidad = () => {
     if (value < 0) {
       form.setFieldsValue({ reca_Cantidad: 0});
     }
+  };
+
+  const validateNoWhitespace = (rule, value) => {
+    if (value && !value.trim()) {
+      return Promise.reject('Este campo no puede estar vacío o contener solo espacios en blanco');
+    }
+    return Promise.resolve();
   };
 
   const detailsTemplate = () => {
@@ -221,7 +264,32 @@ const RevisionCalidad = () => {
                 <strong>Scrap:</strong> {currentRevision.reca_Scrap ? 'Sí' : 'No'}
               </Col>
               <Col span={8}>
-                <strong>Imagen:</strong> <img src={currentRevision.reca_Imagen} alt="Revisión" width="100" />
+                <strong>Imagen:</strong> 
+                <Tooltip title="Ver imagen">
+                  <div style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}>
+                    <img
+                      src={currentRevision.reca_Imagen}
+                      alt="Revisión"
+                      style={{ width: '100px' }}
+                      onClick={() => handlePreview({ url: currentRevision.reca_Imagen })}
+                    />
+                    <EyeOutlined
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        fontSize: '24px',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        display: 'none',
+                      }}
+                      className="eye-icon"
+                    />
+                  </div>
+                </Tooltip>
+                <Modal visible={previewVisible} footer={null} onCancel={handleCancel}>
+                  <img alt="example" style={{ width: '100%' }} src={previewImage} />
+                </Modal>
               </Col>
             </Row>
           </div>
@@ -267,7 +335,7 @@ const RevisionCalidad = () => {
                   <Form.Item
                     name="ensa_Id"
                     label="Orden"
-                    rules={[{ required: true, message: 'El Campo es obligatorio' }]}
+                    rules={[{ required: true, message: 'El Campo es obligatorio' }, { validator: validateNoWhitespace }]}
                   >
                     <Input type="number" min={1}
                       onChange={(e) => handleEnsaIdChange(e.target.value)}
@@ -277,7 +345,7 @@ const RevisionCalidad = () => {
                 </Popover>
               </Col>
               <Col span={12}>
-                <Form.Item name="reca_Descripcion" label="Descripción" rules={[{ required: true, message: 'La descripción es obligatoria' }]}>
+                <Form.Item name="reca_Descripcion" label="Descripción" rules={[{ required: true, message: 'La descripción es obligatoria' }, { validator: validateNoWhitespace }]}>
                   <Input />
                 </Form.Item>
               </Col>
@@ -346,12 +414,6 @@ const RevisionCalidad = () => {
       key: 'reca_Id',
       sorter: (a, b) => a.reca_Id - b.reca_Id,
     },
-    // {
-    //   title: 'Orden Id',
-    //   dataIndex: 'ensa_Id',
-    //   key: 'ensa_Id',
-    //   sorter: (a, b) => a.ensa_Id - b.ensa_Id,
-    // },
     {
       title: 'Descripción',
       dataIndex: 'reca_Descripcion',
@@ -431,6 +493,33 @@ const RevisionCalidad = () => {
               dataSource={filteredData}
               rowKey="reca_Id"
               pagination={{ pageSize: 10 }}
+              expandable={{
+                expandedRowRender: record => (
+                  ensaDetails ? (
+                    <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      <tr style={{ borderBottom: '1px solid #ddd' }}>
+                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Cantidad:</strong> {ensaDetails.ensa_Cantidad}</td>
+                        <td style={{ padding: '8px' }}><strong>Empleado:</strong> {ensaDetails.empl_NombreCompleto}</td>
+                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Descripción:</strong> {ensaDetails.esti_Descripcion}</td>
+                      </tr>
+                      <tr style={{ borderBottom: '1px solid #ddd' }}>
+                      
+                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</td>
+                        <td style={{ padding: '8px' }}><strong>Fecha de Inicio:</strong> {ensaDetails.ensa_FechaInicio}</td>
+                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Fecha Límite:</strong> {ensaDetails.ensa_FechaLimite}</td>
+                      </tr>
+                
+                    </tbody>
+                  </table>
+                  ) : (
+                    <p>Cargando detalles...</p>
+                  )
+                ),
+                rowExpandable: record => true,
+                onExpand: handleExpand,
+                expandedRowKeys: expandedRowKeys,
+              }}
             />
           </div>
         </>
