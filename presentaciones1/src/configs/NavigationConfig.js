@@ -292,6 +292,14 @@ const appsNavTree = [{
           breadcrumb: false,
           submenu: []
         },
+        {
+          key: 'apps-revisiondecalidad',
+          path: `${APP_PREFIX_PATH}/apps/revisiondecalidad`,
+          title: 'sidenav.apps.revisiondecalidad',
+          icon: FileTextOutlined, 
+          breadcrumb: false,
+          submenu: []
+        },
       ]
     },
     //Para tablas con esquema de Acceso
