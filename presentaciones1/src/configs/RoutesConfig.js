@@ -71,6 +71,12 @@ export const protectedRoutes = [
         component: React.lazy(() => import('Paginas/IndexAxion/IndexAxion')),
     },
     {
+        key: 'apps.ordenes',
+        path: `${APP_PREFIX_PATH}/apps/ordenes/*`,
+        component: React.lazy(() => import('Paginas/OrdenDeCompra/OrdenDeCompraEncabezado')),
+      },
+      
+    {
         key: 'apps.talla',
         path: `${APP_PREFIX_PATH}/apps/talla/*`,
         component: React.lazy(() => import('Paginas/Tallas/Tallas')),
@@ -326,6 +332,7 @@ export const protectedRoutes = [
         path: `${APP_PREFIX_PATH}/components/data-display/calendar`,
         component: React.lazy(() => import('views/app-views/components/data-display/calendar')),
     },
+    
     {
         key: 'components.data-display.card',
         path: `${APP_PREFIX_PATH}/components/data-display/card`,
