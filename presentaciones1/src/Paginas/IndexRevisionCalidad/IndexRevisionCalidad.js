@@ -245,7 +245,7 @@ const RevisionCalidad = () => {
           <p><strong>ID:</strong> {ensaDetails.ensa_Id}</p>
           <p><strong>Cantidad:</strong> {ensaDetails.ensa_Cantidad}</p>
           <p><strong>Empleado:</strong> {ensaDetails.empl_NombreCompleto}</p>
-          <p><strong>Descripción:</strong> {ensaDetails.esti_Descripcion}</p>
+          <p><strong>Estilo:</strong> {ensaDetails.esti_Descripcion}</p>
           <p><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</p>
           <p><strong>Fecha de Inicio:</strong> {ensaDetails.ensa_FechaInicio}</p>
           <p><strong>Fecha Límite:</strong> {ensaDetails.ensa_FechaLimite}</p>
@@ -553,7 +553,7 @@ const RevisionCalidad = () => {
                         <tr style={{ borderBottom: '1px solid #ddd' }}>
                           <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Cantidad:</strong> {ensaDetails.ensa_Cantidad}</td>
                           <td style={{ padding: '8px' }}><strong>Empleado:</strong> {ensaDetails.empl_NombreCompleto}</td>
-                          <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Descripción:</strong> {ensaDetails.esti_Descripcion}</td>
+                          <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Estilo:</strong> {ensaDetails.esti_Descripcion}</td>
                         </tr>
                         <tr style={{ borderBottom: '1px solid #ddd' }}>
                           <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</td>
