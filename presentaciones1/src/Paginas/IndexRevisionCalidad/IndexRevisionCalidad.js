@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Popover, Select, Tooltip } from 'antd';
+import { Table, Spin, Alert, Input, Card, Button, Form, Switch, notification, Modal, Row, Col, Upload, Popover, Tooltip } from 'antd';
 import { SearchOutlined, PlusCircleOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
 import Flex from 'components/shared-components/Flex';
 import utils from 'utils';
 import { getRevision, insertarRevision, editarRevision, eliminarRevision, getRevisionEncabezado } from 'services/RevisionCalidadService';
 import axios from 'axios';
+import '../IndexRevisionCalidad/EstiloRevisision.css';
 
 const RevisionCalidad = () => {
   const [data, setData] = useState([]);
@@ -21,7 +22,6 @@ const RevisionCalidad = () => {
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
-  const { Option } = Select;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +46,7 @@ const RevisionCalidad = () => {
     setFilteredData(filtered);
   };
 
-  const handleCollapseOpen = (key, revision = null) => {
+  const handleCollapseOpen = async (key, revision = null) => {
     setActiveKey(key);
     setShowTable(false);
     if (revision) {
@@ -54,10 +54,15 @@ const RevisionCalidad = () => {
       form.setFieldsValue({ ...revision, reca_FechaRevision: fechaRevision });
       setCurrentRevision(revision);
       setImageUrl(revision.reca_Imagen);
+      if (revision.ensa_Id) {
+        await handleEnsaIdChange(revision.ensa_Id);
+      }
     } else {
       form.resetFields();
       setCurrentRevision(null);
       setImageUrl('');
+      setEnsaDetails(null);
+      setPopoverVisible(false);
     }
   };
 
@@ -74,14 +79,12 @@ const RevisionCalidad = () => {
     try {
       const values = await form.validateFields();
 
-      // Validación de imagen
       if (!imageUrl) {
         notification.error({ message: 'Error', description: 'Debe subir una imagen antes de guardar.' });
         return;
       }
 
-      // Validación de ensa_Id
-      if (!ensaDetails) {
+      if (!values.ensa_Id || !ensaDetails) {
         notification.error({ message: 'Error', description: 'Debe seleccionar una orden válida.' });
         return;
       }
@@ -94,14 +97,12 @@ const RevisionCalidad = () => {
         reca_FechaRevision: values.reca_FechaRevision ? new Date(values.reca_FechaRevision).toISOString() : null,
       };
 
-      console.log('Datos enviados:', formData);
-
       if (currentRevision) {
         const updatedRevision = {
           ...currentRevision,
           ...formData,
           reca_FechaModificacion: date,
-          usua_UsuarioModificacion: 1
+          usua_UsuarioModificacion: 1,
         };
         await editarRevision(updatedRevision);
         notification.success({ message: 'Revisión actualizada correctamente' });
@@ -157,11 +158,11 @@ const RevisionCalidad = () => {
   };
 
   const handleEnsaIdChange = async (ensa_Id) => {
-    form.setFieldsValue({ ensa_Id }); 
+    form.setFieldsValue({ ensa_Id });
     if (ensa_Id) {
       try {
         const response = await getRevisionEncabezado(ensa_Id);
-        setEnsaDetails(response.data.length > 0 ? response.data[0] : null); 
+        setEnsaDetails(response.data.length > 0 ? response.data[0] : null);
         setPopoverVisible(true);
       } catch (error) {
         notification.error({ message: 'Error al obtener detalles del ensa_Id', description: error.message });
@@ -193,7 +194,7 @@ const RevisionCalidad = () => {
     }
   };
 
-  const handlePreview = async (file) => {
+  const handlePreview = (file) => {
     setPreviewImage(file.url);
     setPreviewVisible(true);
   };
@@ -221,13 +222,13 @@ const RevisionCalidad = () => {
   const handleQuantityChange = (e) => {
     const value = e.target.value;
     if (value < 0) {
-      form.setFieldsValue({ reca_Cantidad: 0});
+      form.setFieldsValue({ reca_Cantidad: 0 });
     }
   };
 
-  const validateNoWhitespace = (rule, value) => {
-    if (value && !value.trim()) {
-      return Promise.reject('Este campo no puede estar vacío o contener solo espacios en blanco');
+  const validateDescription = (_, value) => {
+    if (value && value.trim() === '') {
+      return Promise.reject(new Error('La descripción no puede contener solo espacios en blanco'));
     }
     return Promise.resolve();
   };
@@ -248,23 +249,12 @@ const RevisionCalidad = () => {
           </Row>
           <div style={{ marginBottom: '16px' }}>
             <Row gutter={[16, 16]}>
-              <Col span={8}>
-                <strong>ID:</strong> {currentRevision.reca_Id}
-              </Col>
-              <Col span={8}>
-                <strong>Descripción:</strong> {currentRevision.reca_Descripcion}
-              </Col>
-              <Col span={8}>
-                <strong>Cantidad:</strong> {currentRevision.reca_Cantidad}
-              </Col>
-              <Col span={8}>
-                <strong>Fecha de Revisión:</strong> {currentRevision.reca_FechaRevision}
-              </Col>
-              <Col span={8}>
-                <strong>Scrap:</strong> {currentRevision.reca_Scrap ? 'Sí' : 'No'}
-              </Col>
-              <Col span={8}>
-                <strong>Imagen:</strong> 
+              <Col span={8}><strong>ID:</strong> {currentRevision.reca_Id}</Col>
+              <Col span={8}><strong>Descripción:</strong> {currentRevision.reca_Descripcion}</Col>
+              <Col span={8}><strong>Cantidad:</strong> {currentRevision.reca_Cantidad}</Col>
+              <Col span={8}><strong>Fecha de Revisión:</strong> {currentRevision.reca_FechaRevision}</Col>
+              <Col span={8}><strong>Scrap:</strong> {currentRevision.reca_Scrap ? 'Sí' : 'No'}</Col>
+              <Col span={8}><strong>Imagen:</strong>
                 <Tooltip title="Ver imagen">
                   <div style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}>
                     <img
@@ -335,19 +325,29 @@ const RevisionCalidad = () => {
                   <Form.Item
                     name="ensa_Id"
                     label="Orden"
-                    rules={[{ required: true, message: 'El Campo es obligatorio' }, { validator: validateNoWhitespace }]}
+                    rules={[{ required: true, message: 'El Campo es obligatorio' }]}
                   >
-                    <Input type="number" min={1}
+                    <Input
+                      type="number"
+                      min={1}
                       onChange={(e) => handleEnsaIdChange(e.target.value)}
-                      onClick={() => setPopoverVisible(true)}
+                      onBlur={() => setPopoverVisible(false)}
                     />
                   </Form.Item>
                 </Popover>
               </Col>
               <Col span={12}>
-                <Form.Item name="reca_Descripcion" label="Descripción" rules={[{ required: true, message: 'La descripción es obligatoria' }, { validator: validateNoWhitespace }]}>
-                  <Input />
-                </Form.Item>
+             <Form.Item
+                  name="reca_Descripcion"
+                  label="Descripción"
+                  rules={[
+                    { required: true, message: 'La descripción es obligatoria' },
+                    { validator: validateDescription },
+                  ]}
+                >
+                <Input />
+              </Form.Item>
+
               </Col>
               <Col span={12}>
                 <Form.Item
@@ -497,21 +497,19 @@ const RevisionCalidad = () => {
                 expandedRowRender: record => (
                   ensaDetails ? (
                     <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse' }}>
-                    <tbody>
-                      <tr style={{ borderBottom: '1px solid #ddd' }}>
-                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Cantidad:</strong> {ensaDetails.ensa_Cantidad}</td>
-                        <td style={{ padding: '8px' }}><strong>Empleado:</strong> {ensaDetails.empl_NombreCompleto}</td>
-                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Descripción:</strong> {ensaDetails.esti_Descripcion}</td>
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #ddd' }}>
-                      
-                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</td>
-                        <td style={{ padding: '8px' }}><strong>Fecha de Inicio:</strong> {ensaDetails.ensa_FechaInicio}</td>
-                        <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Fecha Límite:</strong> {ensaDetails.ensa_FechaLimite}</td>
-                      </tr>
-                
-                    </tbody>
-                  </table>
+                      <tbody>
+                        <tr style={{ borderBottom: '1px solid #ddd' }}>
+                          <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Cantidad:</strong> {ensaDetails.ensa_Cantidad}</td>
+                          <td style={{ padding: '8px' }}><strong>Empleado:</strong> {ensaDetails.empl_NombreCompleto}</td>
+                          <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Descripción:</strong> {ensaDetails.esti_Descripcion}</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #ddd' }}>
+                          <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Proceso:</strong> {ensaDetails.proc_Descripcion}</td>
+                          <td style={{ padding: '8px' }}><strong>Fecha de Inicio:</strong> {ensaDetails.ensa_FechaInicio}</td>
+                          <td style={{ padding: '8px', borderRight: '1px solid #ddd' }}><strong>Fecha Límite:</strong> {ensaDetails.ensa_FechaLimite}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   ) : (
                     <p>Cargando detalles...</p>
                   )

@@ -1,0 +1,8 @@
+.eye-icon {
+    display: none;
+  }
+  
+  div:hover .eye-icon {
+    display: block;
+  }
+  
