@@ -292,17 +292,18 @@ const RevisionCalidad = () => {
                       onClick={() => handlePreview(currentRevision.reca_Imagen)}
                     />
                     <EyeOutlined
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        fontSize: '24px',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        display: 'none',
-                      }}
-                      className="eye-icon"
-                    />
+                    onClick={() => handlePreview(imageUrl)}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      fontSize: '24px',
+                      color: 'rgba(0, 0, 0, 1)',
+                      cursor: 'pointer',
+                      borderBlockColor:'rgba(255, 255, 255, 1)'
+                    }}
+                  />
                   </div>
                 </Tooltip>
                 <Modal visible={previewVisible} footer={null} onCancel={handleCancel}>
