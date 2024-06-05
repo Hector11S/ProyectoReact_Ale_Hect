@@ -46,15 +46,12 @@ const RevisionCalidad = () => {
     fetchData();
   }, []);
 
-  //revisiones segun lo que se busca en el datatable
   const handleSearch = (e) => { 
     const value = e.currentTarget.value.toLowerCase();
     const filtered = utils.wildCardSearch(data, value);
     setFilteredData(filtered);
   };
 
-
-  //abro el formulario para crear o editar
   const handleCollapseOpen = async (key, revision = null) => {
     setActiveKey(key);
     setShowTable(false);
@@ -63,6 +60,7 @@ const RevisionCalidad = () => {
       form.setFieldsValue({ ...revision, reca_FechaRevision: fechaRevision });
       setCurrentRevision(revision);
       setImageUrl(revision.reca_Imagen);
+
       if (revision.ensa_Id) {
         await handleEnsaIdChange(revision.ensa_Id);
       }
@@ -75,8 +73,6 @@ const RevisionCalidad = () => {
     }
   };
 
-
-  //cierro el formulario y cuando se cierra muestro las tablas
   const handleCollapseClose = () => {
     setActiveKey(null);
     setCurrentRevision(null);
@@ -86,8 +82,6 @@ const RevisionCalidad = () => {
     setPopoverVisible(false);
   };
 
-
-  //subo los datos del formulario al crear o editar
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -139,8 +133,17 @@ const RevisionCalidad = () => {
     }
   };
 
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      notification.error({
+        message: 'Error',
+        description: 'Solo se pueden subir imágenes.',
+      });
+    }
+    return isImage || Upload.LIST_IGNORE;
+  };
 
-   //aqui elimino la revision seleccionada
   const handleDelete = async (revision) => {
     Modal.confirm({
       title: '¿Estás seguro de eliminar esta revisión?',
@@ -159,8 +162,6 @@ const RevisionCalidad = () => {
     });
   };
 
-
-  //aqui subo la imagen al servidor y guardo la url
   const handleImageUpload = async ({ file }) => {
     const formData = new FormData();
     formData.append('image', file);
@@ -174,7 +175,6 @@ const RevisionCalidad = () => {
     }
   };
 
-  //Cambia el ID de ensa y obtiene detalles adicionales
   const handleEnsaIdChange = async (ensa_Id) => {
     form.setFieldsValue({ ensa_Id });
     if (ensa_Id) {
@@ -191,8 +191,6 @@ const RevisionCalidad = () => {
     }
   };
 
-  //filtra la vista segun la busqueda
-  //pero no lo uso
   const handleSearchEnsa = async (value) => {
     const filtered = ensaList.filter(ensa => {
         if (typeof ensa.ensa_Id === 'string') {
@@ -201,10 +199,8 @@ const RevisionCalidad = () => {
         return false; // O manejar el caso cuando ensa_Id no es una cadena
     });
     setEnsaList(filtered);
-};
+  };
 
-
-//obtengo los detalle de ensa_Id
   const fetchEnsaDetails = async (ensa_Id) => {
     try {
       const response = await getRevisionEncabezado(ensa_Id);
@@ -214,8 +210,6 @@ const RevisionCalidad = () => {
       return null;
     }
   };
-
-  //expansion de la filas para mostrar lo otros detalles
 
   const handleExpand = async (expanded, aaa) => {
     if (expanded) {
@@ -228,16 +222,13 @@ const RevisionCalidad = () => {
     }
   };
 
-
-  //Vista de las Imagenes
-  const handlePreview = (file) => {
-    setPreviewImage(file.url);
+  const handlePreview = (url) => {
+    setPreviewImage(url);
     setPreviewVisible(true);
   };
 
   const handleCancel = () => setPreviewVisible(false);
 
-  //lo que lleva el popover desplegable
   const popoverContent = (
     <div>
       {ensaDetails ? (
@@ -256,7 +247,6 @@ const RevisionCalidad = () => {
     </div>
   );
 
-  //validacion pa que no pase de 0
   const handleQuantityChange = (e) => {
     const value = e.target.value;
     if (value < 0) {
@@ -264,8 +254,6 @@ const RevisionCalidad = () => {
     }
   };
 
-
-  //validacion para que no pueda guardar espacios
   const validateDescription = (_, value) => {
     if (value && value.trim() === '') {
       return Promise.reject(new Error('La descripción no puede contener solo espacios en blanco'));
@@ -273,7 +261,6 @@ const RevisionCalidad = () => {
     return Promise.resolve();
   };
 
-  //Detalles al apretar el boton
   const detailsTemplate = () => {
     if (!currentRevision) return null;
 
@@ -302,7 +289,7 @@ const RevisionCalidad = () => {
                       src={currentRevision.reca_Imagen}
                       alt="Revisión"
                       style={{ width: '100px' }}
-                      onClick={() => handlePreview({ url: currentRevision.reca_Imagen })}
+                      onClick={() => handlePreview(currentRevision.reca_Imagen)}
                     />
                     <EyeOutlined
                       style={{
@@ -319,7 +306,7 @@ const RevisionCalidad = () => {
                   </div>
                 </Tooltip>
                 <Modal visible={previewVisible} footer={null} onCancel={handleCancel}>
-                  <img alt="example" style={{ width: '100%' }} src={previewImage} />
+                  <img alt="Revisión" style={{ width: '100%' }} src={previewImage} />
                 </Modal>
               </Col>
             </Row>
@@ -358,34 +345,32 @@ const RevisionCalidad = () => {
               <Col span={12}>
                 <Popover
                   content={popoverContent}
-                  // title="Detalles de la Orden"
                   trigger="hover"
                   visible={popoverVisible}
                   onVisibleChange={(visible) => setPopoverVisible(visible)}
                 >
-               <Form.Item
-                name="ensa_Id"
-                label="Orden"
-                rules={[{ required: true, message: 'El Campo es obligatorio' }]}
-              >
-                <Select
-                  showSearch
-                  optionFilterProp="children"
-                  placeholder="Seleccione una orden"
-                  onSelect={handleEnsaIdChange}
-                >
-                  {ensaList.length > 0 ? (
-                    ensaList.map(ensa => (
-                      <Option key={ensa.ensa_Id} value={ensa.ensa_Id}>
-                        {ensa.ensa_Id}
-                      </Option>
-                    ))
-                  ) : (
-                    <Option key="no-data" disabled>No data</Option>
-                  )}
-                </Select>
-              </Form.Item>
-
+                  <Form.Item
+                    name="ensa_Id"
+                    label="Orden"
+                    rules={[{ required: true, message: 'El Campo es obligatorio' }]}
+                  >
+                    <Select
+                      showSearch
+                      optionFilterProp="children"
+                      placeholder="Seleccione una orden"
+                      onSelect={handleEnsaIdChange}
+                    >
+                      {ensaList.length > 0 ? (
+                        ensaList.map(ensa => (
+                          <Option key={ensa.ensa_Id} value={ensa.ensa_Id}>
+                            {ensa.ensa_Id}
+                          </Option>
+                        ))
+                      ) : (
+                        <Option key="no-data" disabled>No data</Option>
+                      )}
+                    </Select>
+                  </Form.Item>
                 </Popover>
               </Col>
               <Col span={12}>
@@ -420,17 +405,43 @@ const RevisionCalidad = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="reca_Imagen" label="Imagen">
-                  <Upload
-                    listType="picture"
-                    showUploadList={false}
-                    customRequest={handleImageUpload}
-                  >
-                    <Button icon={<UploadOutlined />}>Subir Imagen</Button>
-                  </Upload>
-                  {imageUrl && <img src={imageUrl} alt="imagen subida" style={{ width: '100px', marginTop: '10px' }} />}
-                </Form.Item>
-              </Col>
+  <Form.Item name="reca_Imagen" label="Imagen">
+    <Upload
+      listType="picture"
+      showUploadList={false}
+      customRequest={handleImageUpload}
+      beforeUpload={beforeUpload}
+    >
+      <Button icon={<UploadOutlined />}>Subir Imagen</Button>
+    </Upload>
+    {imageUrl && (
+      <div style={{ position: 'relative', width: '100px', marginTop: '10px' }}>
+        <img
+          src={imageUrl}
+          alt="imagen subida"
+          style={{ width: '100%', display: 'block' }}
+        />
+        <Tooltip title="Ver imagen">
+          <EyeOutlined
+            onClick={() => handlePreview(imageUrl)}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              fontSize: '24px',
+              color: 'rgba(255, 255, 255, 0.8)',
+              cursor: 'pointer',
+            }}
+          />
+        </Tooltip>
+      </div>
+    )}
+  </Form.Item>
+  <Modal visible={previewVisible} footer={null} onCancel={handleCancel}>
+    <img alt="Imagen subida" style={{ width: '100%' }} src={previewImage} />
+  </Modal>
+</Col>
             </Row>
             <Row gutter={16} justify="end">
               <Col>
@@ -492,14 +503,14 @@ const RevisionCalidad = () => {
     {
       title: 'Acciones',
       key: 'acciones',
-       fixed:'left', width:350,
+      fixed: 'left', width: 350,
       align: 'center',
       render: (text, aaa) => (
         <Row justify="start">
           <Button
             icon={<EditOutlined />}
             onClick={() => handleCollapseOpen('edit', aaa)}
-            style={{ marginRight: 5, backgroundColor: 'blue', color: 'white'}}
+            style={{ marginRight: 5, backgroundColor: 'blue', color: 'white' }}
           >
             Editar
           </Button>
@@ -513,7 +524,7 @@ const RevisionCalidad = () => {
           <Button
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(aaa)}
-            style={{ marginRight: 5,backgroundColor: 'red', color: 'white'}}
+            style={{ marginRight: 5, backgroundColor: 'red', color: 'white' }}
           >
             Eliminar
           </Button>
