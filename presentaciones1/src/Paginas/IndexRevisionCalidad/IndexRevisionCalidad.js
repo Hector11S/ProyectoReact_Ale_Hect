@@ -430,8 +430,9 @@ const RevisionCalidad = () => {
               left: '50%',
               transform: 'translate(-50%, -50%)',
               fontSize: '24px',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'rgba(0, 0, 0, 1)',
               cursor: 'pointer',
+              borderBlockColor:'rgba(255, 255, 255, 1)'
             }}
           />
         </Tooltip>
