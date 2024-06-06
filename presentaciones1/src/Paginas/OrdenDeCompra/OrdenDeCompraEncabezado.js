@@ -16,13 +16,31 @@ import { getColores } from 'services/ColoresService';
 import { getUnidadesMedida } from 'services/UnidadMedidasService';
 
 import { getOrdenDetalles, eliminarOrdenDetalle,  insertarOrdenDetalle, editarOrdenDetalle } from 'services/OrdenDeCompraDetalleService';
-import { insertarProcesoPorOrdenCompraDetalle, eliminarProcesoPorOrdenCompraDetalle, listarProcesosPorOrdenCompraDetalle } from 'services/ProcesoPorOrdenCompraDetalleService';
-import { insertarMaterialBrindar, eliminarMaterialesBrindar, listarMaterialesBrindar, listarMaterialesBrindarFiltrado } from 'services/MaterialesBrindarService';
+import {
+  insertarProcesoPorOrdenCompraDetalle,
+  eliminarProcesoPorOrdenCompraDetalle,
+  listarProcesosPorOrdenCompraDetalle,
+  dibujarProcesos,
+   } from 'services/ProcesoPorOrdenCompraDetalleService';
+import {
+  insertarMaterialBrindar,
+  editarMaterialBrindar,
+  eliminarMaterialBrindar,
+  listarMaterialesBrindar,
+  listarMaterialesBrindarFiltrado,  } from 'services/MaterialesBrindarService';
 import { listarMateriales } from 'services/MaterialesService';
 
 const { Option } = Select;
 const { Panel } = Collapse;
 const { Step } = Steps;
+
+
+
+
+
+
+
+
 
 const OrdenCompra = () => {
   const [data, setData] = useState([]);
@@ -31,7 +49,6 @@ const OrdenCompra = () => {
   const [error, setError] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [form] = Form.useForm();
-  const [currentOrden, setCurrentOrden] = useState(null);
   const [formasDePago, setFormasDePago] = useState([]);
   const [tipoEmbalaje, setTipoEmbalaje] = useState([]);
   const [clientes, setClientes] = useState([]);
@@ -42,8 +59,7 @@ const OrdenCompra = () => {
   const [colores, setColores] = useState([]);
   const [colorModalVisible, setColorModalVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
-  const [showTable, setShowTable] = useState(true);
-  const [details, setDetails] = useState([]);
+
   const [sexo, setSexo] = useState('M'); 
   const [editingKey, setEditingKey] = useState('');
   const [editingRecord, setEditingRecord] = useState(null);
@@ -55,121 +71,519 @@ const OrdenCompra = () => {
   const [materialCounts, setMaterialCounts] = useState({});
   const [unidadesMedida, setUnidadesMedida] = useState([]);
   const [materialForm] = Form.useForm();
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]); // Estado para la fila expandida
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [editingMaterialId, setEditingMaterialId] = useState(null);
+
+
+
+  const [showTable, setShowTable] = useState(true);
+const [showDetails, setShowDetails] = useState(false);
+const [showEdit, setShowEdit] = useState(false);  // Estado para mostrar el Collapse de edición
+const [detailData, setDetailData] = useState(null);
+const [currentOrden, setCurrentOrden] = useState(null);
+const [details, setDetails] = useState([]);
+
+const openMaterialModal = () => {
+  fetchMateriales(selectedMateriales);
+  setMaterialModalVisible(true);
+};
  
-  const openMaterialModal = () => {
-    fetchMateriales();
-    setMaterialModalVisible(true);
+
+  const handleViewDetails = async (record) => {
+    try {
+      const encabezado = data.find(o => o.orco_Id === record.orco_Id);
+      const detalles = await fetchOrdenDetalles(record.orco_Id);
+  
+      console.log('Encabezado:', encabezado);
+      console.log('Detalles:', detalles);
+  
+      setDetailData({ encabezado, detalles });
+      setShowDetails(true);
+      setShowEdit(false);
+      setShowTable(false);
+    } catch (error) {
+      notification.error({ message: 'Error al cargar detalles de la orden', description: error.message });
+    }
   };
+  
+  
+  
+  const handleEdit = async (record) => {
+    try {
+      const encabezado = data.find(o => o.orco_Id === record.orco_Id);
+      if (encabezado.orco_FechaEmision) {
+        encabezado.orco_FechaEmision = dayjs(encabezado.orco_FechaEmision);
+      }
+      if (encabezado.orco_FechaLimite) {
+        encabezado.orco_FechaLimite = dayjs(encabezado.orco_FechaLimite);
+      }
+  
+      encabezado.orco_Materiales = !!encabezado.orco_Materiales;
+      form.setFieldsValue({ ...form.getFieldsValue(), ...encabezado });
+      setCurrentOrden(encabezado);
+  
+      await fetchOrdenDetalles(record.orco_Id);
+      setShowEdit(true);
+      setShowDetails(false);
+      setShowTable(false);
+    } catch (error) {
+      notification.error({ message: 'Error al cargar la orden de compra', description: error.message });
+    }
+  };
+  
+  
+  
+  
+
+  const renderDetailCollapse = () => (
+    <Collapse activeKey={showDetails ? ['1'] : []} onChange={handleDetailModalClose}>
+      <Panel header="Detalles de la Orden" key="1">
+        {detailData && (
+          <div>
+            <Row>
+              <Col span={12}>
+                <h3>DATOS DEL CLIENTE</h3>
+                <p>Nombre: {detailData.encabezado.clie_Nombre_O_Razon_Social}</p>
+                <p>Dirección: {detailData.encabezado.clie_Direccion}</p>
+                <p>Mail: {detailData.encabezado.clie_Correo_Electronico}</p>
+                <p>Teléfono: {detailData.encabezado.clie_Numero_Contacto}</p>
+              </Col>
+              <Col span={12}>
+                <h3>DATOS DE LA EMPRESA</h3>
+                <p>Nombre: SIMEXPRO</p>
+                <p>Dirección: Calle Cualquiera 123, Cualquier Lugar</p>
+                <p>Mail: hola@unsitiogenial.es</p>
+                <p>Teléfono: 911-234-5678</p>
+              </Col>
+            </Row>
+            <h3>Fecha: {dayjs(detailData.encabezado.orco_FechaEmision).format('DD/MM/YYYY')}</h3>
+            <h3>Dirección de entrega: {detailData.encabezado.orco_DireccionEntrega}</h3>
+            <Table
+              dataSource={detailData.detalles}
+              columns={[
+                { title: 'Cantidad', dataIndex: 'code_CantidadPrenda', key: 'code_CantidadPrenda' },
+                { title: 'Color', dataIndex: 'colr_Id', key: 'colr_Id', render: text => colores.find(color => color.colr_Id === text)?.colr_Nombre },
+                { title: 'Estilo', dataIndex: 'esti_Id', key: 'esti_Id', render: text => estilos.find(est => est.esti_Id === text)?.esti_Descripcion },
+                { title: 'Talla', dataIndex: 'tall_Id', key: 'tall_Id', render: text => tallas.find(talla => talla.tall_Id === text)?.tall_Nombre },
+                { title: 'Especificación de Embalaje', dataIndex: 'code_EspecificacionEmbalaje', key: 'code_EspecificacionEmbalaje' },
+                {
+                  title: 'Proceso Comienza',
+                  dataIndex: 'proc_IdComienza',
+                  key: 'proc_IdComienza',
+                  render: (text, record) => procesos.filter(proc => record.proc_IdComienza.includes(proc.proc_Id)).map(proc => proc.proc_Descripcion).join(', '),
+                },
+                {
+                  title: 'Proceso Actual',
+                  dataIndex: 'proc_IdActual',
+                  key: 'proc_IdActual',
+                  render: (text, record) => procesos.filter(proc => record.proc_IdActual.includes(proc.proc_Id)).map(proc => proc.proc_Descripcion).join(', '),
+                },
+                {
+                  title: 'Materiales',
+                  dataIndex: 'materials',
+                  key: 'materials',
+                  render: (materials) => (
+                    <Table
+                      dataSource={materials}
+                      columns={[
+                        { title: 'Material', dataIndex: 'mate_Id', key: 'mate_Id', render: text => availableMateriales.find(m => m.mate_Id === text)?.mate_Descripcion },
+                        { title: 'Cantidad', dataIndex: 'mabr_Cantidad', key: 'mabr_Cantidad' },
+                        { title: 'Unidad de Medida', dataIndex: 'unme_Id', key: 'unme_Id', render: text => unidadesMedida.find(unidad => unidad.unme_Id === text)?.unme_Descripcion },
+                      ]}
+                      pagination={false}
+                      rowKey={record => `${record.mate_Id}-${record.unme_Id}`}
+                    />
+                  )
+                },
+              ]}
+              pagination={false}
+              summary={pageData => {
+                let total = 0;
+                pageData.forEach(({ code_CantidadPrenda, code_Valor }) => {
+                  total += code_CantidadPrenda * code_Valor;
+                });
+                return (
+                  <>
+                    <Table.Summary.Row>
+                      <Table.Summary.Cell>Total</Table.Summary.Cell>
+                      <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                      <Table.Summary.Cell>{total.toFixed(2)}</Table.Summary.Cell>
+                    </Table.Summary.Row>
+                    <Table.Summary.Row>
+                      <Table.Summary.Cell>IVA 21%</Table.Summary.Cell>
+                      <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                      <Table.Summary.Cell>{(total * 0.21).toFixed(2)}</Table.Summary.Cell>
+                    </Table.Summary.Row>
+                    <Table.Summary.Row>
+                      <Table.Summary.Cell>IRPF 7%</Table.Summary.Cell>
+                      <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                      <Table.Summary.Cell>{(total * 0.07).toFixed(2)}</Table.Summary.Cell>
+                    </Table.Summary.Row>
+                    <Table.Summary.Row>
+                      <Table.Summary.Cell>Total con IVA e IRPF</Table.Summary.Cell>
+                      <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                      <Table.Summary.Cell>{(total * 1.21 - total * 0.07).toFixed(2)}</Table.Summary.Cell>
+                    </Table.Summary.Row>
+                  </>
+                );
+              }}
+            />
+            <div style={{ textAlign: 'right', marginTop: '20px' }}>
+              <p>Forma de pago: {formasDePago.find(fp => fp.fopa_Id === detailData.encabezado.orco_MetodoPago)?.fopa_Descripcion}</p>
+              <p>Nota: El servicio tiene una validez de 30 días.</p>
+            </div>
+            <div style={{ textAlign: 'right', marginTop: '40px' }}>
+              <p>Firma: _______________________</p>
+              <p>Sandra Haro</p>
+            </div>
+          </div>
+        )}
+      </Panel>
+    </Collapse>
+  );
+  
+  
+  
+  
+
+ const handleDetailModalClose = () => {
+   setShowDetails(false);
+   setDetailData(null);
+   setShowTable(true);  // Regresar a la tabla después de cerrar detalles
+ };
+  
+
+  
+  
+  
+
+
+
+
+
+  const renderDetailModal = () => (
+    <Modal
+      title="Detalles de la Orden"
+      visible={detailModalVisible}
+      onCancel={handleDetailModalClose}
+      footer={null}
+      width={800}
+    >
+      {detailData && (
+        <div>
+          <Row>
+            <Col span={12}>
+              <h3>DATOS DEL CLIENTE</h3>
+              <p>Nombre: {detailData.encabezado.clie_Nombre_O_Razon_Social}</p>
+              <p>Dirección: {detailData.encabezado.clie_Direccion}</p>
+              <p>Mail: {detailData.encabezado.clie_Correo_Electronico}</p>
+              <p>Teléfono: {detailData.encabezado.clie_Numero_Contacto}</p>
+            </Col>
+            <Col span={12}>
+              <h3>DATOS DE LA EMPRESA</h3>
+              <p>Nombre: {detailData.encabezado.orco_Codigo}</p>
+              <p>Dirección: Calle Cualquiera 123, Cualquier Lugar</p>
+              <p>Mail: hola@unsitiogenial.es</p>
+              <p>Teléfono: 911-234-5678</p>
+            </Col>
+          </Row>
+          <h3>Fecha: {dayjs(detailData.encabezado.orco_FechaEmision).format('DD/MM/YYYY')}</h3>
+          <Table
+            dataSource={detailData.detalles}
+            columns={[
+              { title: 'Concepto', dataIndex: 'esti_Id', key: 'esti_Id', render: text => estilos.find(est => est.esti_Id === text)?.esti_Descripcion },
+              { title: 'Cantidad', dataIndex: 'code_CantidadPrenda', key: 'code_CantidadPrenda' },
+              { title: 'Precio', dataIndex: 'code_Valor', key: 'code_Valor' },
+              { title: 'Total', key: 'total', render: (text, record) => (record.code_CantidadPrenda * record.code_Valor).toFixed(2) }
+            ]}
+            pagination={false}
+            summary={pageData => {
+              let total = 0;
+              pageData.forEach(({ code_CantidadPrenda, code_Valor }) => {
+                total += code_CantidadPrenda * code_Valor;
+              });
+              return (
+                <>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell>Total</Table.Summary.Cell>
+                    <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                    <Table.Summary.Cell>{total.toFixed(2)}</Table.Summary.Cell>
+                  </Table.Summary.Row>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell>IVA 21%</Table.Summary.Cell>
+                    <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                    <Table.Summary.Cell>{(total * 0.21).toFixed(2)}</Table.Summary.Cell>
+                  </Table.Summary.Row>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell>IRPF 7%</Table.Summary.Cell>
+                    <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                    <Table.Summary.Cell>{(total * 0.07).toFixed(2)}</Table.Summary.Cell>
+                  </Table.Summary.Row>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell>Total con IVA e IRPF</Table.Summary.Cell>
+                    <Table.Summary.Cell colSpan={2}></Table.Summary.Cell>
+                    <Table.Summary.Cell>{(total * 1.21 - total * 0.07).toFixed(2)}</Table.Summary.Cell>
+                  </Table.Summary.Row>
+                </>
+              );
+            }}
+          />
+          <div style={{ textAlign: 'right', marginTop: '20px' }}>
+            <p>Forma de pago: {formasDePago.find(fp => fp.fopa_Id === detailData.encabezado.orco_MetodoPago)?.fopa_Descripcion}</p>
+            <p>Nota: El servicio tiene una validez de 30 días.</p>
+          </div>
+          <div style={{ textAlign: 'right', marginTop: '40px' }}>
+            <p>Firma: _______________________</p>
+            <p>Sandra Haro</p>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+  
  
+  
+  
+
+
+
+
+
+
+
 
 
 
 
   // DATAMASTERRRRRRRRR
   const renderExpandedRow = (record) => {
-    const materialesData = record.materials || [];
-    const procesosComienzaData = record.proc_IdComienza.map(proc_Id => ({ proc_Id }));
-    const procesosActualData = record.proc_IdActual.map(proc_Id => ({ proc_Id }));
+    const procesosComienzaData = Array.isArray(record.proc_IdComienza) ? record.proc_IdComienza.map((proc_Id, index) => ({
+      proc_Id,
+      key: `${record.code_Id}-comienza-${index}`,
+      code_Id: record.code_Id,
+      tipo: 'Comienza'
+    })) : [];
+  
+    const procesosActualData = Array.isArray(record.proc_IdActual) ? record.proc_IdActual.map((proc_Id, index) => ({
+      proc_Id,
+      key: `${record.code_Id}-actual-${index}`,
+      code_Id: record.code_Id,
+      tipo: 'Actual'
+    })) : [];
+  
+    const materialesData = Array.isArray(record.materials) ? record.materials : [];
   
     return (
       <div>
         <h4>Materiales</h4>
-        <Table
-          dataSource={materialesData}
-          columns={[
-            { title: 'Material', dataIndex: 'mate_Id', key: 'mate_Id', render: (text) => availableMateriales.find(m => m.mate_Id === text)?.mate_Descripcion },
-            { title: 'Cantidad', dataIndex: 'mabr_Cantidad', key: 'mabr_Cantidad' },
-            { title: 'Unidad de Medida', dataIndex: 'unme_Id', key: 'unme_Id', render: (text) => unidadesMedida.find(u => u.unme_Id === text)?.unme_Descripcion },
-          ]}
-          rowKey="mate_Id"
-          pagination={false}
-        />
+        <Form form={materialForm} component={false}>
+          <Table
+            dataSource={materialesData}
+            columns={[
+              {
+                title: 'Material',
+                dataIndex: 'mate_Id',
+                key: 'mate_Id',
+                render: (text) => availableMateriales.find(m => m.mate_Id === text)?.mate_Descripcion
+              },
+              {
+                title: 'Cantidad',
+                dataIndex: 'mabr_Cantidad',
+                key: 'mabr_Cantidad',
+                render: (text, material) => renderMaterialCell(text, material, 'mabr_Cantidad')
+              },
+              {
+                title: 'Unidad de Medida',
+                dataIndex: 'unme_Id',
+                key: 'unme_Id',
+                render: (text, material) => renderMaterialCell(text, material, 'unme_Id')
+              },
+              {
+                title: 'Acciones',
+                key: 'acciones',
+                render: (text, material) => (
+                  <span>
+                    {editingMaterialId === material.mate_Id ? (
+                      <Button onClick={() => handleSaveMaterial(material)} style={{ marginRight: 8 }}>Guardar</Button>
+                    ) : (
+                      <Button
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditMaterial(material)}
+                        style={{ marginRight: 8 }}
+                      >
+                        Editar
+                      </Button>
+                    )}
+                    <Button
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDeleteMaterial(material, record)}
+                      style={{ marginLeft: 8 }}
+                    />
+                  </span>
+                ),
+              },
+            ]}
+            rowKey={(record) => `${record.mate_Id}-${record.unme_Id}`} // Asegúrate de que la clave sea única
+            pagination={false}
+          />
+        </Form>
         <h4>Procesos</h4>
         <Table
           dataSource={[...procesosComienzaData, ...procesosActualData]}
           columns={[
+            { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
             { title: 'Proceso', dataIndex: 'proc_Id', key: 'proc_Id', render: (text) => procesos.find(p => p.proc_Id === text)?.proc_Descripcion },
+            {
+              title: 'Acciones',
+              key: 'acciones',
+              render: (text, record) => (
+                <Button
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDeleteProceso(record, record.tipo === 'Comienza' ? 'proc_IdComienza' : 'proc_IdActual')}
+                  style={{ marginLeft: 8 }}
+                />
+              ),
+            },
           ]}
-          rowKey="proc_Id"
+          rowKey={(record) => record.key}
           pagination={false}
         />
       </div>
     );
   };
+  
+  
+  
+  
+  
+  
+  
+  
 
 
 
-  const handleAddDetail = async () => {
+
+  //EDITADO
+  const fetchOrdenDetalles = async (orco_Id) => {
     try {
-      const values = await form.validateFields(detailFields);
-      const newDetail = {
-        ...values,
-        code_CantidadPrenda: values.code_CantidadPrenda || 1,
-        code_Unidad: values.code_Unidad || 1,
-        esti_Id: values.esti_Id || 0,
-        tall_Id: values.tall_Id || 0,
-        code_FechaProcActual: formatDate(new Date()),
-        code_FechaCreacion: formatDate(new Date()),
-        usua_UsuarioCreacion: 1,
-        isNew: true,
-        orco_Id: currentOrden ? currentOrden.orco_Id : null,
-        proc_IdComienza: selectedProcesosComienza,
-        proc_IdActual: selectedProcesosActual,
-        materials: selectedMateriales.map(material => ({
-          ...material,
-          code_Id: undefined 
-        }))
-      };
+      console.log(`Fetching details for order ID: ${orco_Id}`);
+      
+      const detalles = await getOrdenDetalles(orco_Id);
   
-      console.log('New Detail:', newDetail);
-      setDetails(prevDetails => [...prevDetails, newDetail]);
-      form.resetFields(detailFields);
-      setSelectedColor(null);
-      setSelectedMateriales([]); 
-    } catch (errorInfo) {
-      console.error('Validation failed:', errorInfo);
-    }
-  };
+      const detallesConProcesosYMateriales = await Promise.all(detalles.map(async (detalle) => {
+        const [procesos, materiales] = await Promise.all([
+          listarProcesosPorOrdenCompraDetalle(detalle.code_Id),
+          listarMaterialesBrindarFiltrado(detalle.code_Id)
+        ]);
   
+        console.log(`Procesos for code_Id ${detalle.code_Id}:`, procesos);  // Verificar que los procesos están siendo recibidos
+        console.log(`Materiales for code_Id ${detalle.code_Id}:`, materiales);  // Verificar que los materiales están siendo recibidos
   
-
- 
- 
-  const handleMaterialCountChange = (materialId, count) => {
-    setMaterialCounts({
-      ...materialCounts,
-      [materialId]: count,
-    });
+        const proc_IdActual = procesos.length > 0 ? procesos.map(proc => proc.proc_Id) : [];
+        const proc_IdComienza = procesos.length > 0 ? procesos.map(proc => proc.proc_Id) : [];
   
-    setAvailableMateriales((prev) =>
-      prev.map((material) =>
-        material.mate_Id === materialId ? { ...material, cantidad: count } : material
-      )
-    );
+        return {
+          ...detalle,
+          proc_IdComienza,
+          proc_IdActual,
+          materials: Array.isArray(materiales) ? materiales : []
+        };
+      }));
   
-    console.log(`Material ID: ${materialId}, Cantidad: ${count}`);
-  };
+      console.log("Detalles con Procesos y Materiales:", detallesConProcesosYMateriales);
   
-  
-  
-  
-  
-
-  const fetchMateriales = async () => {
-    try {
-      const materiales = await listarMateriales();
-      const filteredMateriales = materiales.filter(material => 
-        !selectedMateriales.some(selected => selected.mate_Id === material.mate_Id));
-      setAvailableMateriales(filteredMateriales);
+      setDetails(detallesConProcesosYMateriales);
+      return detallesConProcesosYMateriales;
     } catch (error) {
-      notification.error({ message: 'Error al cargar materiales', description: error.message });
+      notification.error({ message: 'Error al cargar detalles de la orden', description: error.message });
     }
   };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  const handleExpand = (expanded, record) => {
+    setExpandedRowKeys(expanded ? [record.code_Id] : []);
+  };
+  
+
+const handleAddDetail = async () => {
+  try {
+    const values = await form.validateFields(detailFields);
+    const newDetail = {
+      ...values,
+      code_CantidadPrenda: values.code_CantidadPrenda || 1,
+      code_Unidad: values.code_Unidad || 1,
+      esti_Id: values.esti_Id || 0,
+      tall_Id: values.tall_Id || 0,
+      code_FechaProcActual: formatDate(new Date()),
+      code_FechaCreacion: formatDate(new Date()),
+      usua_UsuarioCreacion: 1,
+      isNew: true,
+      orco_Id: currentOrden ? currentOrden.orco_Id : null,
+      proc_IdComienza: Array.isArray(selectedProcesosComienza) ? selectedProcesosComienza : [],
+      proc_IdActual: Array.isArray(selectedProcesosActual) ? selectedProcesosActual : [],
+      materials: Array.isArray(selectedMateriales) ? selectedMateriales.map(material => ({
+        ...material,
+        code_Id: undefined 
+      })) : []
+    };
+
+    console.log('New Detail:', newDetail);
+    setDetails(prevDetails => [...prevDetails, newDetail]);
+    form.resetFields(detailFields);
+    setSelectedColor(null);
+    fetchMateriales();
+
+    setSelectedMateriales([]); 
+  } catch (errorInfo) {
+    console.error('Validation failed:', errorInfo);
+  }
+};
+
+  
+  
+
+ 
+ 
+
+  
+  
+  
+  
+  
+
+const fetchMateriales = async (selectedMateriales = []) => {
+  try {
+    const materiales = await listarMateriales();
+    const filteredMateriales = materiales.filter(material => 
+      !selectedMateriales.some(selected => selected.mate_Id === material.mate_Id)
+    );
+    setAvailableMateriales(filteredMateriales);
+  } catch (error) {
+    notification.error({ message: 'Error al cargar materiales', description: error.message });
+  }
+};
+
 
 
   const addMaterial = async (material) => {
     try {
       const values = await materialForm.validateFields();
+      if (!material.unme_Id) {
+        throw new Error('Debe seleccionar una unidad de medida antes de agregar el material.');
+      }
       const updatedMaterial = {
         ...material,
         mabr_Cantidad: material.mabr_Cantidad || 1,  // Verifica que aquí se está asignando el valor correcto
@@ -181,9 +595,10 @@ const OrdenCompra = () => {
       notification.success({ message: 'Material agregado', description: 'El material ha sido agregado correctamente' });
     } catch (error) {
       console.error('Validation failed:', error);
-      notification.error({ message: 'Error al agregar material', description: 'Hubo un problema al agregar el material' });
+      notification.error({ message: 'Error al agregar material', description: error.message || 'Hubo un problema al agregar el material' });
     }
   };
+  
   
   
   
@@ -193,11 +608,7 @@ const OrdenCompra = () => {
 
    
   
-    const removeMaterial = (material) => {
-      setSelectedMateriales(selectedMateriales.filter(m => m.mate_Id !== material.mate_Id));
-      setAvailableMateriales([...availableMateriales, material]);
-    };
-
+  
 
 
     const fetchUnidadesMedida = async () => {
@@ -207,6 +618,15 @@ const OrdenCompra = () => {
       } catch (error) {
         notification.error({ message: 'Error al cargar unidades de medida', description: error.message });
       }
+    };
+
+
+    const handleMaterialChange = (materialId, field, value) => {
+      setSelectedMateriales((prev) =>
+        prev.map((material) =>
+          material.mate_Id === materialId ? { ...material, [field]: value } : material
+        )
+      );
     };
   
     useEffect(() => {
@@ -271,13 +691,8 @@ const OrdenCompra = () => {
       </Modal>
     );
     
-    const handleMaterialChange = (materialId, field, value) => {
-      setAvailableMateriales((prev) =>
-        prev.map((material) =>
-          material.mate_Id === materialId ? { ...material, [field]: value } : material
-        )
-      );
-    };
+    
+  
     
     
     
@@ -305,10 +720,13 @@ const OrdenCompra = () => {
 
 
 
+ 
 
-  const edit = (record) => {
+
+
+  const edit = async (record) => {
     const currentValues = form.getFieldsValue();
-    
+  
     const detailFields = {
       code_CantidadPrenda: record.code_CantidadPrenda,
       colr_Id: record.colr_Id,
@@ -322,7 +740,7 @@ const OrdenCompra = () => {
       esti_Id: record.esti_Id,
       tall_Id: record.tall_Id,
     };
-    
+  
     form.setFieldsValue({
       ...currentValues,
       ...detailFields,
@@ -330,18 +748,38 @@ const OrdenCompra = () => {
     setSexo(record.code_Sexo);
     setEditingKey(record.code_Id);
     setEditingRecord(record);
+  
+    setSelectedProcesosComienza(record.proc_IdComienza);
+    setSelectedProcesosActual(record.proc_IdActual);
+    setSelectedMateriales(record.materials);
+  
+    fetchMateriales(record.materials);  // Fetch materials excluding the already selected ones
   };
+  
+
+  
+  
+  
+  
+
+  
+  
+  
+  
+  
+  
+
   
   
   const save = async (record) => {
     try {
       const row = await form.validateFields();
-      const detailData = {};
-      detailFields.forEach(field => {
-        if (row[field] !== undefined) {
-          detailData[field] = row[field];
-        }
-      });
+      const detailData = {
+        ...row,
+        proc_IdComienza: selectedProcesosComienza,
+        proc_IdActual: selectedProcesosActual,
+        materials: selectedMateriales
+      };
   
       const newData = [...details];
       const index = newData.findIndex((item) => record.code_Id === item.code_Id);
@@ -362,7 +800,7 @@ const OrdenCompra = () => {
           notification.success({ message: 'Detalle actualizado en la tabla' });
         }
       } else {
-        newData.push(detailData);
+        newData.push(row);
         setDetails(newData);
         setEditingKey('');
         setEditingRecord(null);
@@ -382,6 +820,21 @@ const OrdenCompra = () => {
   };
   
 
+
+  const removeMaterial = (material) => {
+    setSelectedMateriales(selectedMateriales.filter(m => m.mate_Id !== material.mate_Id));
+    setAvailableMateriales([...availableMateriales, material]);
+  
+    if (editingRecord) {
+      const updatedMaterials = editingRecord.materials.filter(m => m.mate_Id !== material.mate_Id);
+      setEditingRecord({ ...editingRecord, materials: updatedMaterials });
+  
+      const filteredMateriales = availableMateriales.filter(mat => 
+        !updatedMaterials.some(selected => selected.mate_Id === mat.mate_Id)
+      );
+      setAvailableMateriales(filteredMateriales);
+    }
+  };
   
   
   
@@ -464,7 +917,7 @@ const OrdenCompra = () => {
           getColores()
         ]);
   
-        console.log('Ordenes:', ordenes);
+        console.log('Ordenes:', ordenes); // Agregar console.log para verificar las órdenes
   
         if (Array.isArray(ordenes) && Array.isArray(formasPago) && Array.isArray(tiposEmbalaje) &&
           Array.isArray(clientesList) && Array.isArray(estilosList) && Array.isArray(tallasList) &&
@@ -490,6 +943,75 @@ const OrdenCompra = () => {
   
     fetchData();
   }, [setLoading]);
+  
+  const columns = [
+    {
+      title: 'ID',
+      dataIndex: 'orco_Id',
+      key: 'orco_Id',
+      sorter: (a, b) => a.orco_Id - b.orco_Id,
+    },
+    {
+      title: 'Código',
+      dataIndex: 'orco_Codigo',
+      key: 'orco_Codigo',
+      sorter: (a, b) => a.orco_Codigo.localeCompare(b.orco_Codigo),
+    },
+    {
+      title: 'Fecha Emisión',
+      dataIndex: 'orco_FechaEmision',
+      key: 'orco_FechaEmision',
+      sorter: (a, b) => new Date(a.orco_FechaEmision) - new Date(b.orco_FechaEmision),
+    },
+    {
+      title: 'Acciones',
+      key: 'acciones',
+      align: 'center',
+      render: (text, record) => {
+        console.log(`Orden ID: ${record.orco_Id}, Estado Finalizado: ${record.orco_EstadoFinalizado}`); // Verificar cada orden y estado finalizado
+  
+        const isFinalizado = record.orco_EstadoFinalizado === true || record.orco_EstadoFinalizado === 1;
+        return (
+          <Row justify="center">
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              style={{ marginRight: 8, backgroundColor: isFinalizado ? 'grey' : 'blue', color: 'white' }}
+              disabled={isFinalizado}  // Deshabilitar el botón si está finalizado
+            >
+              Editar
+            </Button>
+            <Button
+              icon={<EyeOutlined />}
+              onClick={() => handleViewDetails(record)}
+              style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
+            >
+              Detalles
+            </Button>
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record)}
+              style={{ backgroundColor: 'red', color: 'white' }}
+            >
+              Eliminar
+            </Button>
+            <Button
+              icon={<CheckOutlined />}
+              onClick={!isFinalizado ? () => handleFinalizar(record) : null}
+              style={{ backgroundColor: isFinalizado ? 'grey' : 'green', color: 'white' }}
+            >
+              {isFinalizado ? 'Finalizado' : 'Finalizar'}
+            </Button>
+          </Row>
+        );
+      },
+    }
+  ];
+  
+  
+  
+  // Asegúrate de que tu componente devuelva el JSX correcto, incluyendo la tabla que usa las columnas definidas anteriormente
+  
   
   
   
@@ -715,16 +1237,17 @@ const OrdenCompra = () => {
               });
             }
             for (const material of detail.materials) {
-              await insertarMaterialBrindar({
-                code_Id: detailId, 
+              const materialData = {
+                code_Id: detailId,
                 mate_Id: material.mate_Id,
                 unme_Id: material.unme_Id,
                 mabr_Cantidad: material.mabr_Cantidad,
                 usua_UsuarioCreacion: 1,
                 mabr_FechaCreacion: formatDate(new Date())
-              });
+              };
+              console.log('Material a insertar:', materialData); // Añadir console.log aquí
+              await insertarMaterialBrindar(materialData);
             }
-            
           } else {
             console.error('Error: No detail ID returned from the API');
           }
@@ -782,16 +1305,17 @@ const OrdenCompra = () => {
                 poco_FechaCreacion: formatDate(new Date())
               });
             }
-            for (const material of selectedMateriales) {
-              console.log('Material before API:', material);
-              await insertarMaterialBrindar({
+            for (const material of detail.materials) {
+              const materialData = {
                 code_Id: detailId,
                 mate_Id: material.mate_Id,
-                unme_Id: material.unme_Id, 
+                unme_Id: material.unme_Id,
                 mabr_Cantidad: material.mabr_Cantidad,
                 usua_UsuarioCreacion: 1,
                 mabr_FechaCreacion: formatDate(new Date())
-              });
+              };
+              console.log('Material a insertar:', materialData); // Añadir console.log aquí también
+              await insertarMaterialBrindar(materialData);
             }
           } else {
             console.error('Error: No detail ID returned from the API');
@@ -829,11 +1353,10 @@ const OrdenCompra = () => {
   
   
   
-
+  
+  
   
 
-  
-  
   
 
   const insertarProcesoYMateriales = async (detailId) => {
@@ -849,15 +1372,26 @@ const OrdenCompra = () => {
     }
   
     for (const material of selectedMateriales) {
-      await insertarMaterialBrindar({
+      const materialData = {
         code_Id: detailId,
         mate_Id: material.mate_Id,
         usua_UsuarioCreacion: 1,
         mabr_Cantidad: material.cantidad,
         mabr_FechaCreacion: fechaActual
-      });
+      };
+  
+      console.log('Material a insertar:', materialData); 
+  
+      await insertarMaterialBrindar(materialData);
     }
   };
+  
+  
+  
+
+
+
+  
   
   
   
@@ -954,44 +1488,63 @@ const OrdenCompra = () => {
 
 
   
-  const handleCollapseOpen = async (key, orden = null) => {
+  const handleCollapseOpen = async (type, orden = null) => {
     setCurrentStep(0);
     setShowTable(false);
-    if (orden) {
-        try {
-            const encabezado = data.find(o => o.orco_Id === orden.orco_Id);
   
-            if (encabezado.orco_FechaEmision) {
-                encabezado.orco_FechaEmision = dayjs(encabezado.orco_FechaEmision);
-            }
-            if (encabezado.orco_FechaLimite) {
-                encabezado.orco_FechaLimite = dayjs(encabezado.orco_FechaLimite);
-            }
+    if (type === 'edit') {
+      try {
+        const encabezado = data.find(o => o.orco_Id === orden.orco_Id);
   
-            encabezado.orco_Materiales = !!encabezado.orco_Materiales;
-  
-            const currentValues = form.getFieldsValue();
-            form.setFieldsValue({
-              ...currentValues,
-              ...encabezado
-            });
-            setCurrentOrden(encabezado);
-  
-            const detalles = await getOrdenDetalles(orden.orco_Id);
-            setDetails(detalles);
-        } catch (error) {
-            console.error("Error al cargar la orden de compra:", error);
-            notification.error({
-                message: 'Error al cargar la orden de compra',
-                description: error.message,
-            });
+        if (encabezado.orco_FechaEmision) {
+          encabezado.orco_FechaEmision = dayjs(encabezado.orco_FechaEmision);
         }
-    } else {
-        form.resetFields();
-        setCurrentOrden(null);
-        setCliente({});
+        if (encabezado.orco_FechaLimite) {
+          encabezado.orco_FechaLimite = dayjs(encabezado.orco_FechaLimite);
+        }
+  
+        encabezado.orco_Materiales = !!encabezado.orco_Materiales;
+  
+        const currentValues = form.getFieldsValue();
+        form.setFieldsValue({
+          ...currentValues,
+          ...encabezado
+        });
+        setCurrentOrden(encabezado);
+  
+        await fetchOrdenDetalles(orden.orco_Id);
+  
+        setShowEdit(true);
+        setShowDetails(false);
+      } catch (error) {
+        console.error("Error al cargar la orden de compra:", error);
+        notification.error({
+          message: 'Error al cargar la orden de compra',
+          description: error.message,
+        });
+      }
+    } else if (type === 'details') {
+      try {
+        const encabezado = data.find(o => o.orco_Id === orden.orco_Id);
+        const detalles = await fetchOrdenDetalles(orden.orco_Id);
+  
+        setDetailData({ encabezado, detalles });
+        setShowDetails(true);
+        setShowEdit(false);
+      } catch (error) {
+        notification.error({ message: 'Error al cargar detalles de la orden', description: error.message });
+      }
+    } else if (type === 'new') {
+      form.resetFields();
+      setCurrentOrden(null);
+      setCliente({});
+      setShowEdit(true);
+      setShowDetails(false);
     }
   };
+  
+  
+  
   
 
 
@@ -1426,16 +1979,6 @@ const OrdenCompra = () => {
       render: (text) => tallas.find((talla) => talla.tall_Id === text)?.tall_Nombre,
     },
     {
-      title: 'Sexo',
-      dataIndex: 'code_Sexo',
-      key: 'code_Sexo',
-    },
-    {
-      title: 'Impuesto',
-      dataIndex: 'code_Impuesto',
-      key: 'code_Impuesto',
-    },
-    {
       title: 'Acciones',
       key: 'acciones',
       render: (text, record, index) => {
@@ -1470,7 +2013,7 @@ const OrdenCompra = () => {
             </Button>
           </span>
         );
-      }
+      },
     }
   ]}
   rowClassName="editable-row"
@@ -1482,9 +2025,12 @@ const OrdenCompra = () => {
   rowKey="code_Id"
   expandable={{
     expandedRowRender: renderExpandedRow,
-    rowExpandable: record => record.name !== 'Not Expandable',
+    expandedRowKeys: expandedRowKeys,
+    onExpand: handleExpand,
   }}
 />
+
+
 
         </>
       )
@@ -1505,68 +2051,7 @@ const OrdenCompra = () => {
 
 
 
-  const columns = [
-    {
-      title: 'ID',
-      dataIndex: 'orco_Id',
-      key: 'orco_Id',
-      sorter: (a, b) => a.orco_Id - b.orco_Id,
-    },
-    {
-      title: 'Código',
-      dataIndex: 'orco_Codigo',
-      key: 'orco_Codigo',
-      sorter: (a, b) => a.orco_Codigo.localeCompare(b.orco_Codigo),
-    },
-    {
-      title: 'Fecha Emisión',
-      dataIndex: 'orco_FechaEmision',
-      key: 'orco_FechaEmision',
-      sorter: (a, b) => new Date(a.orco_FechaEmision) - new Date(b.orco_FechaEmision),
-    },
-    {
-      title: 'Acciones',
-      key: 'acciones',
-      align: 'center',
-      render: (text, record) => {
-        console.log(`Record ID: ${record.orco_Id}, Estado Finalizado: ${record.orco_EstadoFinalizado}`);
-        const isFinalizado = record.orco_EstadoFinalizado === true || record.orco_EstadoFinalizado === 1;
-        return (
-          <Row justify="center">
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => handleCollapseOpen('edit', record)}
-              style={{ marginRight: 8, backgroundColor: 'blue', color: 'white' }}
-              disabled={isFinalizado}  // Deshabilitar el botón si está finalizado
-            >
-              Editar
-            </Button>
-            <Button
-              icon={<EyeOutlined />}
-              onClick={() => handleCollapseOpen('details', record)}
-              style={{ marginRight: 8, backgroundColor: 'orange', color: 'white' }}
-            >
-              Detalles
-            </Button>
-            <Button
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record)}
-              style={{ backgroundColor: 'red', color: 'white' }}
-            >
-              Eliminar
-            </Button>
-            <Button
-              icon={<CheckOutlined />}  
-              onClick={!isFinalizado ? () => handleFinalizar(record) : null}  
-              style={{ backgroundColor: isFinalizado ? 'grey' : 'green', color: 'white' }}
-            >
-              {isFinalizado ? 'Finalizado' : 'Finalizar'}
-            </Button>
-          </Row>
-        );
-      },
-    },
-  ];
+ 
   
   
   
@@ -1575,7 +2060,8 @@ const OrdenCompra = () => {
   
   
   
-
+  
+  
 
 
   const renderDetailTable = (details) => (
@@ -1597,13 +2083,89 @@ const OrdenCompra = () => {
           title: 'Proceso Comienza',
           dataIndex: 'proc_IdComienza',
           key: 'proc_IdComienza',
-          render: (text) => procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion,
+          render: (text, record) => (
+            <div>
+              {procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion}
+              <Button
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteProceso(record, 'proc_IdComienza')}
+                style={{ marginLeft: 8 }}
+              />
+            </div>
+          ),
         },
         {
           title: 'Proceso Actual',
           dataIndex: 'proc_IdActual',
           key: 'proc_IdActual',
-          render: (text) => procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion,
+          render: (text, record) => (
+            <div>
+              {procesos.find((proceso) => proceso.proc_Id === text)?.proc_Descripcion}
+              <Button
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteProceso(record, 'proc_IdActual')}
+                style={{ marginLeft: 8 }}
+              />
+            </div>
+          ),
+        },
+        {
+          title: 'Material',
+          dataIndex: 'materials',
+          key: 'materials',
+          render: (materials, record) => (
+            <Table
+              dataSource={materials}
+              columns={[
+                {
+                  title: 'Descripción',
+                  dataIndex: 'mate_Id',
+                  key: 'mate_Id',
+                  render: (text) => availableMateriales.find((material) => material.mate_Id === text)?.mate_Descripcion,
+                },
+                {
+                  title: 'Cantidad',
+                  dataIndex: 'mabr_Cantidad',
+                  key: 'mabr_Cantidad',
+                  render: (text, material) => (
+                    <div>
+                      <InputNumber
+                        min={1}
+                        value={text}
+                        onChange={(value) => handleMaterialCountChange(material.mate_Id, value)}
+                      />
+                    </div>
+                  ),
+                },
+                {
+                  title: 'Unidad de Medida',
+                  dataIndex: 'unme_Id',
+                  key: 'unme_Id',
+                  render: (text) => unidadesMedida.find((unidad) => unidad.unme_Id === text)?.unme_Descripcion,
+                },
+                {
+                  title: 'Acciones',
+                  key: 'acciones',
+                  render: (text, material) => (
+                    <span>
+                      <Button
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditMaterial(material.mate_Id, material.mabr_Cantidad)}
+                        style={{ marginLeft: 8 }}
+                      />
+                      <Button
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDeleteMaterial(material, record)}
+                        style={{ marginLeft: 8 }}
+                      />
+                    </span>
+                  ),
+                },
+              ]}
+              rowKey={(record) => `${record.mate_Id}-${record.unme_Id}`} // Asegúrate de que la clave sea única
+              pagination={false}
+            />
+          ),
         },
         {
           title: 'Unidad',
@@ -1649,36 +2211,23 @@ const OrdenCompra = () => {
             const editable = editingKey === record.code_Id;
             return editable ? (
               <span>
-                <Button
-                  onClick={() => save(record)}
-                  style={{ marginRight: 8 }}
-                >
+                <Button onClick={() => save(record)} style={{ marginRight: 8 }}>
                   Guardar
                 </Button>
-                <Button onClick={cancel}>
-                  Cancelar
-                </Button>
+                <Button onClick={cancel}>Cancelar</Button>
               </span>
             ) : (
               <span>
-                <Button
-                  icon={<EditOutlined />}
-                  onClick={() => edit(record)}
-                  style={{ marginRight: 8 }}
-                >
+                <Button icon={<EditOutlined />} onClick={() => edit(record)} style={{ marginRight: 8 }}>
                   Editar
                 </Button>
-                <Button
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDeleteDetail(index, record)}
-                  style={{ marginRight: 8 }}
-                >
+                <Button icon={<DeleteOutlined />} onClick={() => handleDeleteDetail(index, record)} style={{ marginRight: 8 }}>
                   Eliminar
                 </Button>
               </span>
             );
-          }
-        }
+          },
+        },
       ]}
       rowClassName="editable-row"
       components={{
@@ -1687,20 +2236,193 @@ const OrdenCompra = () => {
         },
       }}
       rowKey="code_Id"
+      expandable={{
+        expandedRowRender: renderExpandedRow,
+        expandedRowKeys: expandedRowKeys,
+        onExpand: handleExpand,
+      }}
+
     />
   );
   
+  
+  
+  
+
+  const handleDeleteMaterial = async (material, record) => {
+    if (!material.isNew) {
+      try {
+        const materialToDelete = { mabr_Id: material.mabr_Id };
+        await eliminarMaterialBrindar(materialToDelete);
+        notification.success({ message: 'Material eliminado correctamente' });
+      } catch (error) {
+        notification.error({ message: 'Error al eliminar material', description: error.message });
+      }
+    }
+  
+    setDetails((prevDetails) =>
+      prevDetails.map((detail) =>
+        detail.code_Id === record.code_Id
+          ? { 
+              ...detail, 
+              materials: detail.materials.filter((mat) => mat.mate_Id !== material.mate_Id) 
+            }
+          : detail
+      )
+    );
+  };
+  
+  
+  
+  const handleEditMaterial = (material) => {
+    setEditingMaterialId(material.mate_Id);
+    materialForm.setFieldsValue({
+      mate_Id: material.mate_Id, // Asegúrate de capturar el ID del material
+      mabr_Cantidad: material.mabr_Cantidad,
+      unme_Id: material.unme_Id,
+      code_Id: material.code_Id // Asegúrate de capturar el ID del detalle general
+    });
+  };
+  
+  
+  
+  const handleSaveMaterial = async (material) => {
+    try {
+      const values = await materialForm.validateFields();
+      const materialData = {
+        ...values,
+        mabr_Id: material.mabr_Id, // ID del material brindado
+        code_Id: material.code_Id, // ID del detalle general
+        mate_Id: material.mate_Id  // Asegúrate de que el mate_Id se está pasando
+      };
+      await editarMaterialBrindar(materialData);
+      setDetails((prevDetails) =>
+        prevDetails.map((detail) => ({
+          ...detail,
+          materials: detail.materials.map((mat) =>
+            mat.mate_Id === material.mate_Id
+              ? { ...mat, mabr_Cantidad: values.mabr_Cantidad, unme_Id: values.unme_Id }
+              : mat
+          ),
+        }))
+      );
+      setEditingMaterialId(null);
+      notification.success({ message: 'Material actualizado correctamente' });
+    } catch (error) {
+      console.error('Error al guardar el material:', error);
+      notification.error({ message: 'Error al guardar el material', description: error.message });
+    }
+  };
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+  
+
+  const renderMaterialCell = (text, material, field) => {
+    if (editingMaterialId === material.mate_Id) {
+      if (field === 'mabr_Cantidad') {
+        return (
+          <Form.Item
+            name="mabr_Cantidad"
+            style={{ margin: 0 }}
+            rules={[{ required: true, message: 'La cantidad es obligatoria' }]}
+          >
+            <InputNumber min={1} />
+          </Form.Item>
+        );
+      }
+      if (field === 'unme_Id') {
+        return (
+          <Form.Item
+            name="unme_Id"
+            style={{ margin: 0 }}
+            rules={[{ required: true, message: 'La unidad de medida es obligatoria' }]}
+          >
+            <Select>
+              {unidadesMedida.map((unidad) => (
+                <Option key={unidad.unme_Id} value={unidad.unme_Id}>
+                  {unidad.unme_Descripcion}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        );
+      }
+    }
+    if (field === 'unme_Id') {
+      return unidadesMedida.find((unidad) => unidad.unme_Id === text)?.unme_Descripcion || text;
+    }
+    return text;
+  };
+  
+  
+
+
+  
+
+ 
+  
+  const handleDeleteProceso = async (record, processType) => {
+    try {
+      const proceso = {
+        code_Id: record.code_Id,
+        proc_Id: record.proc_Id
+      };
+      await eliminarProcesoPorOrdenCompraDetalle(proceso);
+      setDetails((prevDetails) =>
+        prevDetails.map((detail) =>
+          detail.code_Id === record.code_Id
+            ? { 
+                ...detail, 
+                [processType]: detail[processType].filter((proc) => proc !== record.proc_Id) 
+              }
+            : detail
+        )
+      );
+      notification.success({ message: 'Proceso eliminado correctamente' });
+    } catch (error) {
+      notification.error({ message: 'Error al eliminar el proceso', description: error.message });
+    }
+  };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  const handleMaterialCountChange = (mate_Id, value) => {
+    setSelectedMateriales((prevMaterials) =>
+      prevMaterials.map((material) =>
+        material.mate_Id === mate_Id ? { ...material, mabr_Cantidad: value } : material
+      )
+    );
+  };
+  
+
+
 
   return (
     <Card>
       {showTable ? (
         <>
           <Card>
-            <h1 className='text-center'>Órdenes de Compra</h1>
+            <h1 className="text-center">Órdenes de Compra</h1>
           </Card>
           <Flex alignItems="center" justifyContent="space-between" mobileFlex={false}>
             <div>
-              <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>Nueva Orden</Button>
+              <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => handleCollapseOpen('new')} block>
+                Nueva Orden
+              </Button>
             </div>
             <Flex className="mb-1" mobileFlex={false}>
               <div className="mr-md-3 mb-3">
@@ -1709,46 +2431,50 @@ const OrdenCompra = () => {
             </Flex>
           </Flex>
           <div className="table-responsive">
-            <Table
-              columns={columns}
-              dataSource={filteredData}
-              rowKey="orco_Id"
-              pagination={{ pageSize: 10 }}
-            />
+            <Table columns={columns} dataSource={filteredData} rowKey="orco_Id" pagination={{ pageSize: 10 }} />
           </div>
         </>
       ) : (
         <>
-          <Steps current={currentStep} onChange={handleStepChange}>
-            <Step title="Encabezado" icon={<FileTextOutlined />} />
-            <Step title="Detalle" icon={<SolutionOutlined />} />
-          </Steps>
-          <div className="steps-content">
-            {steps[currentStep].content}
-          </div>
-          <div className="steps-action">
-            {currentStep < steps.length - 1 && (
-              <Button type="primary" onClick={() => handleStepChange(currentStep + 1)}>
-                Siguiente
-              </Button>
-            )}
-            {currentStep === steps.length - 1 && (
-              <Button type="primary" onClick={handleSubmit}>
-                {currentOrden ? 'Actualizar' : 'Crear'}
-              </Button>
-            )}
-            {currentStep > 0 && (
-              <Button style={{ margin: '0 8px' }} onClick={() => handleStepChange(currentStep - 1)}>
-                Anterior
-              </Button>
-            )}
-          </div>
+          {showDetails && renderDetailCollapse()}  {/* Renderiza el Collapse de Detalles */}
+          {!showDetails && showEdit && (
+            <>
+              <Steps current={currentStep} onChange={handleStepChange}>
+                <Step title="Encabezado" icon={<FileTextOutlined />} />
+                <Step title="Detalle" icon={<SolutionOutlined />} />
+              </Steps>
+              <div className="steps-content">{steps[currentStep].content}</div>
+              <div className="steps-action">
+                {currentStep < steps.length - 1 && (
+                  <Button type="primary" onClick={() => handleStepChange(currentStep + 1)}>
+                    Siguiente
+                  </Button>
+                )}
+                {currentStep === steps.length - 1 && (
+                  <Button type="primary" onClick={handleSubmit}>
+                    {currentOrden ? 'Actualizar' : 'Crear'}
+                  </Button>
+                )}
+                {currentStep > 0 && (
+                  <Button style={{ margin: '0 8px' }} onClick={() => handleStepChange(currentStep - 1)}>
+                    Anterior
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
         </>
       )}
       {renderColorModal()}
       {renderMaterialModal()}
     </Card>
   );
+  
+  
+  
+  
+  
+  
   
 };
 
