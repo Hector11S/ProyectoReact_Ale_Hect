@@ -46,12 +46,15 @@ const RevisionCalidad = () => {
     fetchData();
   }, []);
 
+  //Filtra las revisiones en segun la busqueda
   const handleSearch = (e) => { 
     const value = e.currentTarget.value.toLowerCase();
     const filtered = utils.wildCardSearch(data, value);
     setFilteredData(filtered);
   };
 
+
+  //abre el colapse 
   const handleCollapseOpen = async (key, revision = null) => {
     setActiveKey(key);
     setShowTable(false);
@@ -72,7 +75,7 @@ const RevisionCalidad = () => {
       setPopoverVisible(false);
     }
   };
-
+//cierra el colapse
   const handleCollapseClose = () => {
     setActiveKey(null);
     setCurrentRevision(null);
@@ -82,6 +85,8 @@ const RevisionCalidad = () => {
     setPopoverVisible(false);
   };
 
+
+  //Valido y envio los datos del formulario del crear y editar
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -133,6 +138,7 @@ const RevisionCalidad = () => {
     }
   };
 
+  //Validacion de solo subir imagenes
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
@@ -144,6 +150,7 @@ const RevisionCalidad = () => {
     return isImage || Upload.LIST_IGNORE;
   };
 
+  //Eliminar
   const handleDelete = async (revision) => {
     Modal.confirm({
       title: '¿Estás seguro de eliminar esta revisión?',
@@ -162,6 +169,7 @@ const RevisionCalidad = () => {
     });
   };
 
+  //Subo imagen al servidor 
   const handleImageUpload = async ({ file }) => {
     const formData = new FormData();
     formData.append('image', file);
@@ -175,6 +183,7 @@ const RevisionCalidad = () => {
     }
   };
 
+  //Detalles del ensa_Id 
   const handleEnsaIdChange = async (ensa_Id) => {
     form.setFieldsValue({ ensa_Id });
     if (ensa_Id) {
@@ -191,6 +200,7 @@ const RevisionCalidad = () => {
     }
   };
 
+  //No lo uso 
   const handleSearchEnsa = async (value) => {
     const filtered = ensaList.filter(ensa => {
         if (typeof ensa.ensa_Id === 'string') {
@@ -201,6 +211,7 @@ const RevisionCalidad = () => {
     setEnsaList(filtered);
   };
 
+  //solicito lo que trae el ensa_Id para obtener los detalles
   const fetchEnsaDetails = async (ensa_Id) => {
     try {
       const response = await getRevisionEncabezado(ensa_Id);
@@ -211,24 +222,29 @@ const RevisionCalidad = () => {
     }
   };
 
+  //Lo del datamaster de expandir filas y muestra los detalles 
   const handleExpand = async (expanded, aaa) => {
     if (expanded) {
       const details = await fetchEnsaDetails(aaa.ensa_Id);
       setEnsaDetails(details);
-      setExpandedRowKeys([aaa.reca_Id]);
+      setExpandedRowKeys([aaa.reca_Id]); //actualiza el estado con setEnsaDetails y setExpandedRowKeys
     } else {
       setExpandedRowKeys([]);
       setEnsaDetails(null);
     }
   };
 
+  //vista previa de la imagen
   const handlePreview = (url) => {
     setPreviewImage(url);
     setPreviewVisible(true);
   };
 
+  //Oculta el modal
   const handleCancel = () => setPreviewVisible(false);
 
+
+  //Contenido del Popover 
   const popoverContent = (
     <div>
       {ensaDetails ? (
@@ -247,6 +263,7 @@ const RevisionCalidad = () => {
     </div>
   );
 
+  //que lo que ingreso no sea negativo
   const handleQuantityChange = (e) => {
     const value = e.target.value;
     if (value < 0) {
@@ -254,6 +271,7 @@ const RevisionCalidad = () => {
     }
   };
 
+  //que no guarde espacios en blanco
   const validateDescription = (_, value) => {
     if (value && value.trim() === '') {
       return Promise.reject(new Error('La descripción no puede contener solo espacios en blanco'));
